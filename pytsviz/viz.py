@@ -250,6 +250,7 @@ def plotly_tsdisplay(series, nfft=1024, lags=192):
 
 def plot_distribution_histogram(series, bins=10, title="", color="royalblue"):
     """
+    Plotly histogram of a time series. Useful to assess marginal distribution shape
     :param series: Time series
     :type series: `~numpy.array-like`
     :param bins: Number of bins in the histogram
