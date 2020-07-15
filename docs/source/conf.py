@@ -9,11 +9,11 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 
@@ -23,7 +23,6 @@ author = "Riccardo Maganza"
 
 # The full version, including alpha/beta/rc tags
 release = "0.0.1"
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -44,8 +43,6 @@ extensions = [
 ]
 
 # Napoleon settings
-napoleon_google_docstring = True
-napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = True
 napoleon_include_special_with_doc = True
@@ -64,6 +61,13 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# Intersphinx
+intersphinx_mapping = {
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "matplotlib": ("https://matplotlib.org", None),
+    "pandas": ("http://pandas.pydata.org/pandas-docs/dev", None),
+    "python": ("https://docs.python.org/3", None),
+}
 
 # -- Options for HTML output -------------------------------------------------
 

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import plotly.graph_objs as go
 from matplotlib import gridspec
 from matplotlib import pyplot as plt
 from plotly.subplots import make_subplots
@@ -171,6 +172,114 @@ def tsdisplay(
     return fig
 
 
+def plotly_tsdisplay(series, nfft=1024, lags=192):
+
+    """
+    Comprehensive matplotlib plot showing: line plot of time series, spectral density, ACF and PACF.
+
+    :param series: Time series
+    :type series: `~numpy.array-like`
+    :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
+    :type nfft: `int`, optional, default *None*
+    :param lags: Number of lags to compute ACF and PACF
+    :type lags: `int`, default 192
+    :return: Plotly figure
+    :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
+    """
+
+    # --- Periodogram ---
+    f, pxx = periodogram(series, nfft=nfft)
+    f = f[1:]
+    t = 1 / f
+    pxx = pxx[1:]
+
+    trace_periodogram = go.Scatter(x=f, y=pxx, marker=dict(color="royalblue"))
+
+    # --- ACF ---
+    v_acf, acf_confint = acf(series.values, nlags=lags, alpha=0.05)
+    trace_acflci = go.Scatter(
+        y=acf_confint[:, 0] - v_acf,
+        fill="tozeroy",
+        mode="lines",
+        line=dict(width=0, color="lavender"),
+    )
+    trace_acfhci = go.Scatter(
+        y=acf_confint[:, 1] - v_acf,
+        fill="tozeroy",
+        mode="lines",
+        line=dict(width=0, color="lavender"),
+    )
+    trace_acf = go.Bar(y=v_acf, marker=dict(color="royalblue"))
+
+    # --- PACF ---
+    v_pacf, pacf_confint = pacf(series.values, nlags=lags, alpha=0.05)
+    trace_pacf = go.Bar(y=v_pacf, marker=dict(color="royalblue"))
+    trace_pacflci = go.Scatter(
+        y=pacf_confint[:, 0] - v_pacf,
+        fill="tozeroy",
+        mode="lines",
+        line=dict(width=0, color="lavender"),
+    )
+    trace_pacfhci = go.Scatter(
+        y=pacf_confint[:, 1] - v_pacf,
+        fill="tozeroy",
+        mode="lines",
+        line=dict(width=0, color="lavender"),
+    )
+
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        specs=[[{"colspan": 2}, None], [{}, {}]],
+        subplot_titles=["Periodogram", "ACF", "PACF"],
+        print_grid=False,
+    )
+
+    fig.append_trace(trace_periodogram, 1, 1)
+    fig.append_trace(trace_acflci, 2, 1)
+    fig.append_trace(trace_acf, 2, 1)
+    fig.append_trace(trace_acfhci, 2, 1)
+    fig.append_trace(trace_pacf, 2, 2)
+    fig.append_trace(trace_pacflci, 2, 2)
+    fig.append_trace(trace_pacfhci, 2, 2)
+
+    fig.layout.update(showlegend=False)
+    fig.show()
+    return fig
+
+
+def plot_distribution_histogram(series, bins=10, title="", color="royalblue"):
+    """
+    :param series: Time series
+    :type series: `~numpy.array-like`
+    :param bins: Number of bins in the histogram
+    :type bins: `int`, default 10
+    :param title: Plot Title
+    :type title: `str`, default ""
+    :param color: Histogram color, check Plotly docs for accepted values
+    :type color: `str~, default "royalblue"
+    :return: Plotly figure
+    :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
+    """
+    x = series.tolist()
+
+    bins_size = (np.max(x) - np.min(x)) / bins
+
+    trace = go.Histogram(
+        x=x,
+        histnorm="probability",
+        xbins=dict(start=np.min(x), size=bins_size, end=np.max(x)),
+        marker=dict(color=color),
+    )
+
+    layout = go.Layout(title=title)
+
+    fig = go.Figure(data=[trace], layout=layout)
+    fig.show()
+
+    return fig
+
+
 def plot_gof(
     y,
     y_hat,
@@ -185,7 +294,7 @@ def plot_gof(
 ):
     """
     Shows an interactive plot of goodness of fit visualizations. In order: Actual Series vs Predicted Series,
-    Residuals series, and Actual vs Predicted scatterplot.
+    Residuals series, and Actual vs Predicted scatter plot.
 
     :param y: Actual series
     :type y: Array-like
@@ -201,7 +310,7 @@ def plot_gof(
     :type subplot_titles: `tuple(str, str, str)`, default (*'Actual vs Predicted Series'*, *'Residuals'*,
      *Actual vs Predicted Scatter'*)
     :return: Tuple of plotly figures
-    :rtype: :py:class:`plotly.graph_objects.Figure`
+    :rtype: `tuple` of :py:class:`plotly.graph_objects.Figure`. Length 2.
     """
 
     fig = make_subplots(rows=3, cols=1, subplot_titles=subplot_titles)
