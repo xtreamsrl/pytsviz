@@ -1,3 +1,8 @@
+"""
+The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (partial) correlograms, periodograms, line plots, ...
+"""
+
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
@@ -42,7 +47,7 @@ def plotly_acf(series, nlags, title="ACF"):
     Interactive barplot of the autocorrelation function of a time series up to a certain lag
 
     :param series: Time series
-    :type series: `~numpy.array-like`
+    :type series: `array-like`
     :param nlags: Maximum lag to consider
     :type nlags: `int`
     :param title: Plot Title
@@ -64,7 +69,7 @@ def plotly_pacf(series, nlags, title="PACF"):
     Interactive barplot of the partial autocorrelation function of a time series up to a certain lag
 
     :param series: Time series
-    :type series: `~numpy.array-like`
+    :type series: `array-like`
     :param nlags: Maximum lag to consider
     :type nlags: `int`
     :param title: Plot Title
@@ -94,7 +99,7 @@ def plotly_psd(
     Interactive histogram of the spectral density of a time series
 
     :param series: Time series
-    :type series: `~numpy.array-like`
+    :type series: `array-like`
     :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
     :type nfft: `int`, optional, default *None*
     :param fs: Sampling frequency of `series`.
@@ -136,7 +141,7 @@ def tsdisplay(
     Comprehensive matplotlib plot showing: line plot of time series, spectral density, ACF and PACF.
 
     :param series: Time series
-    :type series: `~numpy.array-like`
+    :type series: `array-like`
     :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
     :type nfft: `int`, optional, default *None*
     :param lags: Number of lags to compute ACF and PACF
@@ -178,7 +183,7 @@ def plotly_tsdisplay(series, nfft=1024, lags=192):
     Comprehensive matplotlib plot showing: line plot of time series, spectral density, ACF and PACF.
 
     :param series: Time series
-    :type series: `~numpy.array-like`
+    :type series: `array-like`
     :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
     :type nfft: `int`, optional, default *None*
     :param lags: Number of lags to compute ACF and PACF
@@ -250,9 +255,10 @@ def plotly_tsdisplay(series, nfft=1024, lags=192):
 
 def plot_distribution_histogram(series, bins=10, title="", color="royalblue"):
     """
-    Plotly histogram of a time series. Useful to assess marginal distribution shape
+    Plotly histogram of a time series. Useful to assess marginal distribution shape.
+
     :param series: Time series
-    :type series: `~numpy.array-like`
+    :type series: Array-like
     :param bins: Number of bins in the histogram
     :type bins: `int`, default 10
     :param title: Plot Title
@@ -298,7 +304,7 @@ def plot_gof(
     Residuals series, and Actual vs Predicted scatter plot.
 
     :param y: Actual series
-    :type y: Array-like
+    :type y: `array-like`
     :param y_hat: Predicted series
     :type y_hat: Array-like
     :param title: Plot Title

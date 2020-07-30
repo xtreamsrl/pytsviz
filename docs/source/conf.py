@@ -1,4 +1,5 @@
 # Configuration file for the Sphinx documentation builder.
+
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
@@ -52,6 +53,13 @@ napoleon_use_admonition_for_references = False
 napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
+
+autosummary_generate = True
+
+autodoc_default_flags = [
+    # Make sure that any autodoc declarations show the right members
+    "members"
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
