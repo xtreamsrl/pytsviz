@@ -264,7 +264,7 @@ def plot_distribution_histogram(series, bins=10, title="", color="royalblue"):
     :param title: Plot Title
     :type title: `str`, default ""
     :param color: Histogram color, check Plotly docs for accepted values
-    :type color: `str~, default "royalblue"
+    :type color: `str`, default "royalblue"
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
