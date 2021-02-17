@@ -2,11 +2,16 @@
 The *utils* module contains utilies not strictly related to visualization which we often use (eg harmonics computation).
 """
 
-
+import datetime as dt
+import math
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
+from scipy import stats
+from statsmodels.tsa._stl import STL
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.statespace.structural import UnobservedComponents
 
 
 def harmonics(dates, period, n, epoch=datetime(1900, 1, 1)):
@@ -33,3 +38,92 @@ def harmonics(dates, period, n, epoch=datetime(1900, 1, 1)):
         d[f"Cos_{round(period)}_{i}"] = np.cos(2 * i * np.pi * hours / period)
 
     return d
+
+
+def datetimediv(dividend, delta):
+    seconds = int((dividend - dt.datetime.min).total_seconds())
+    remainder = dt.timedelta(
+        seconds=seconds % delta.total_seconds(),
+        microseconds=dividend.microsecond,
+    )
+    quotient = dividend - remainder
+    return quotient, remainder
+
+
+def boxcox(x):
+    return stats.boxcox(x)[0]
+
+
+def yeojohnson(x):
+    return stats.yeojohnson(x)[0]
+
+
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'same') / w
+
+
+transform_dict = {
+    "Box-Cox": {
+        boxcox: {
+            }
+    },
+    "Yeo-Johnson": {
+        yeojohnson: {
+        }
+    },
+    "log": {
+        np.vectorize(math.log): {
+        }
+    },
+    "moving_average": {
+        moving_average: {
+        }
+    }
+}
+
+decompose_dict = {
+    "STL": {
+        STL: {
+        }
+    },
+    "seasonal_additive": {
+        seasonal_decompose: {
+            "model": "additive"
+        }
+    },
+    "seasonal_multiplicative": {
+        seasonal_decompose: {
+            "model": "multiplicative"
+        }
+    },
+    "harmonic": {
+        UnobservedComponents: {
+            "level": "fixed intercept",
+            "freq_seasonal": [{'period': 50}],
+
+        }
+    }
+}
+
+valid_components = [
+    "level",
+    "trend",
+    "seasonal",
+    "freq_seasonal",
+    "cycle",
+    "autoregressive",
+    "resid"
+]
+
+
+def set_time_index(df, time_col):
+    if time_col is not None:
+        df.set_index(time_col, inplace=True)
+
+
+def get_components(result):
+    components = {}
+    for c in valid_components:
+        if c in dir(result):
+            components[c] = getattr(result, c)
+    return components
