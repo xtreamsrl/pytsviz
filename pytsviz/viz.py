@@ -311,7 +311,8 @@ def plotly_tsdisplay(
         nfft=1024,
         lags=None,
         alpha=0.1,
-        show=True
+        show=True,
+        title=None
 ):
 
     """
@@ -335,9 +336,11 @@ def plotly_tsdisplay(
         specs=[[{"colspan": 2}, None], [{}, {}]],
         subplot_titles=["Periodogram", "ACF", "PACF"],
     )
+    def_title = "Time series analysis"
     fig.update_layout(
         template=template,
-        showlegend=False
+        showlegend=False,
+        title=title if title is not None else def_title
     )
 
     # --- Periodogram ---
@@ -511,7 +514,8 @@ def time_series_plot(
     if custom_tf is not None:
         transformed_df = df.apply(custom_tf, args=tf_args, **kwargs).add_prefix('tf(').add_suffix(")")
         df = pd.concat([df, transformed_df], axis=1) if keep_original else transformed_df
-    def_title = "Time series (" + ", ".join(y_cols) + ")"
+
+    def_title = "Time series (" + ", ".join(y_cols) + ")" if y_cols is not None else "Time series"
     fig = _plot_plotly(
         df,
         kind="line",
@@ -817,7 +821,8 @@ def inverse_arma_roots_plot(
 def composite_matrix_scatterplot(
         feat_df,
         time_col: str = None,
-        y_cols: List[str] = None
+        y_cols: List[str] = None,
+        title: str = None
 ):
     df = feat_df.copy()
     set_time_index(df, time_col)
@@ -832,9 +837,11 @@ def composite_matrix_scatterplot(
         row_titles=list(feats),
         column_titles=list(feats)
     )
+    def_title = "Scatter Matrix, extended"
     fig.update_layout(
         template=template,
-        showlegend=False
+        showlegend=False,
+        title=title if title is not None else def_title
     )
 
     for i, j in product(indices, indices):
@@ -887,7 +894,8 @@ def composite_summary_plot(
         series,
         lags=None,
         alpha=0.1,
-        show=True
+        show=True,
+        title=None
 ):
 
     if lags is None:
@@ -899,9 +907,11 @@ def composite_summary_plot(
         specs=[[{"colspan": 2}, None], [{}, {}]],
         subplot_titles=["Time series", "ACF", "Distribution"],
     )
+    def_title = "Time series overview"
     fig.update_layout(
         template=template,
-        showlegend=False
+        showlegend=False,
+        title=title if title is not None else def_title
     )
 
     # --- Time series ---
