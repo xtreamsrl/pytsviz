@@ -31,14 +31,24 @@ template = dict(
     layout=go.Layout(
         xaxis=dict(
             showgrid=False,
-            zeroline=False
+            zeroline=False,
+            automargin=True
         ),
         yaxis=dict(
             zeroline=False
         ),
         title_font=dict(
             family="Rockwell",
-            size=24)
+            size=24),
+        autosize=True,
+        height=800,
+        margin=dict(
+            l=50,
+            r=50,
+            b=100,
+            t=100,
+            pad=4
+        ),
     )
 )
 
@@ -54,17 +64,29 @@ def _plot_plotly(
     **kwargs
 ):
     with pd.option_context("plotting.backend", "plotly"):
-        fig = df.plot(kind=kind, **kwargs)  # render_mode="SVG"
-    template["layout"]["xaxis"]["title_text"] = x_title
-    template["layout"]["yaxis"]["title_text"] = y_title
-    template["layout"]["xaxis"]["type"] = x_type
-    template["layout"]["yaxis"]["type"] = y_type
+        fig = df.plot(
+            kind=kind,
+            **kwargs
+        )
+    fig.update_layout(
+        xaxis_title=x_title,
+        yaxis_title=y_title,
+        xaxis_type=x_type,
+        yaxis_type=y_type
+    )
     fig.update_layout(template=template)
     fig.update_layout(layout)
     return fig
 
 
-def plotly_acf(series, nlags, title="ACF", show_threshold=True, show=True, **kwargs):
+def plotly_acf(
+        series,
+        nlags,
+        title=None,
+        show_threshold=True,
+        show=True,
+        **kwargs
+):
     """
     Interactive barplot of the autocorrelation function of a time series up to a certain lag
 
@@ -100,14 +122,17 @@ def plotly_acf(series, nlags, title="ACF", show_threshold=True, show=True, **kwa
         }
     )
 
+    def_title = "ACF"
     fig = _plot_plotly(
         plot_df,
         kind="bar",
         x="lag",
         y="acf",
-        title=title,
+        title=title if title is not None else def_title,
         error_y=c_upper,
-        error_y_minus=c_lower
+        error_y_minus=c_lower,
+        x_title="Lag",
+        y_title="Value"
     )
 
     if show_threshold:
@@ -138,7 +163,14 @@ def plotly_acf(series, nlags, title="ACF", show_threshold=True, show=True, **kwa
         return fig
 
 
-def plotly_pacf(series, nlags, title="PACF", show_threshold=True, show=True, **kwargs):
+def plotly_pacf(
+        series,
+        nlags,
+        title=None,
+        show_threshold=True,
+        show=True,
+        **kwargs
+):
     """
     Interactive barplot of the partial autocorrelation function of a time series up to a certain lag
 
@@ -173,15 +205,17 @@ def plotly_pacf(series, nlags, title="PACF", show_threshold=True, show=True, **k
             "pacf": pacf_values
         }
     )
-
+    def_title = "PACF"
     fig = _plot_plotly(
         plot_df,
         kind="bar",
         x="lag",
         y="pacf",
-        title=title,
+        title=title if title is not None else def_title,
         error_y=c_upper,
-        error_y_minus=c_lower
+        error_y_minus=c_lower,
+        x_title="Lag",
+        y_title="Value"
     )
 
     if show_threshold:
@@ -219,7 +253,7 @@ def plotly_psd(
     min_period=0,
     max_period=np.inf,
     plot_time=False,
-    title="PSD",
+    title=None,
     **kwargs
 ):
     """
@@ -247,13 +281,15 @@ def plotly_psd(
     plt_df = pd.DataFrame({"f": f, "spectral_density": spectral_density})
     plt_df["t"] = 1 / plt_df.f
     plt_df = plt_df[(plt_df.t < max_period) & (plt_df.t > min_period)]
+    def_title = "PSD"
     return _plot_plotly(
         plt_df,
         x="t" if plot_time else "f",
         y="spectral_density",
         kind="hist",
         x_title="Period" if plot_time else "Frequency",
-        title=title,
+        y_title="Density",
+        title=title if title is not None else def_title,
     )
 
 
@@ -342,14 +378,31 @@ def plotly_tsdisplay(
         showlegend=False,
         title=title if title is not None else def_title
     )
+    fig.update_xaxes(title_text="Frequency", row=1, col=1)
+    fig.update_yaxes(title_text="Density", row=1, col=1)
+    fig.update_xaxes(title_text="Lag", row=2, col=1)
+    fig.update_yaxes(title_text="Value", row=2, col=1)
+    fig.update_xaxes(title_text="Lag", row=2, col=2)
+    fig.update_yaxes(title_text="Value", row=2, col=2)
 
     # --- Periodogram ---
     f, pxx = periodogram(series, nfft=nfft)
     f = f[1:]
     t = 1 / f
     pxx = pxx[1:]
+    periodogram_df = pd.DataFrame(
+        dict(
+            freq=f,
+            density=pxx
+        )
+    )
 
-    periodogram_trace = go.Scatter(x=f, y=pxx, marker=dict(color="royalblue"))
+    periodogram_trace = _plot_plotly(
+        periodogram_df,
+        x="freq",
+        y="density",
+        kind="line",
+    ).data[0]
 
     # --- ACF ---
     acf_traces = plotly_acf(series, nlags=lags, alpha=alpha, show=False).data
@@ -403,7 +456,9 @@ def plot_distribution_histogram(series, bins=None, title="", show=True):
         kind="histogram",
         histnorm="probability",
         nbins=bins,
-        title=title
+        title=title,
+        x_title="Value",
+        y_title="Frequency"
     )
 
     if show:
@@ -420,8 +475,8 @@ def plot_gof(
         title="Goodness of Fit",
         subplot_titles=(
             "Actual vs Predicted Series",
-            "Residuals",
             "Actual vs Predicted Scatter",
+            "Residuals"
         ),
         show=True
 ):
@@ -449,7 +504,13 @@ def plot_gof(
     set_time_index(df, time_col)
     df["Resid"] = df[y_col] - df[y_hat_col]
 
-    fig = make_subplots(rows=3, cols=1, subplot_titles=subplot_titles)
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        subplot_titles=subplot_titles,
+        specs=[[{}, {"rowspan": 2}],
+               [{}, None]],
+    )
     fig.update_layout(
         template=template,
         showlegend=False,
@@ -474,11 +535,15 @@ def plot_gof(
     for trace in scatter_traces:
         fig.append_trace(
             trace,
-            row=3,
-            col=1
+            row=1,
+            col=2,
         )
-    fig.update_xaxes(title_text=y_col, row=3, col=1)
-    fig.update_yaxes(title_text=y_hat_col, row=3, col=1)
+    fig.update_xaxes(title_text="Time", row=1, col=1)
+    fig.update_yaxes(title_text="Value", row=1, col=1)
+    fig.update_xaxes(title_text="Time", row=2, col=1)
+    fig.update_yaxes(title_text="Value", row=2, col=1)
+    fig.update_xaxes(title_text=y_col, row=1, col=2)
+    fig.update_yaxes(title_text=y_hat_col, row=1, col=2)
 
     if show:
         fig.show()
@@ -519,7 +584,9 @@ def time_series_plot(
     fig = _plot_plotly(
         df,
         kind="line",
-        title=title if title is not None else def_title
+        title=title if title is not None else def_title,
+        x_title="Time",
+        y_title="Value"
     )
     if show:
         fig.show()
@@ -588,7 +655,9 @@ def decomposed_time_series_plot(
         df,
         kind="line",
         facet_row='variable' if subplots else None,
-        title=title if title is not None else def_title
+        title=title if title is not None else def_title,
+        x_title="Time",
+        y_title="Value"
     )
     if show:
         fig.show()
@@ -614,7 +683,9 @@ def forecast_plot(
     fig = _plot_plotly(
         line_df,
         kind="line",
-        title=title if title is not None else def_title
+        title=title if title is not None else def_title,
+        x_title="Time",
+        y_title="Value"
     )
     if upper_col is not None:
         fig.add_trace(
@@ -748,6 +819,8 @@ def scatterplot(
         x=var1,
         y=var2,
         title=title if title is not None else def_title,
+        x_title=var1,
+        y_title=var2,
         **kwargs
     )
     if show:
@@ -849,7 +922,7 @@ def composite_matrix_scatterplot(
         y = df[feats[j]]
         if i > j:
             # --- Scatterplot ---
-            scatter_trace = scatterplot(feat_df, x, y, show=False).data[0]
+            scatter_trace = scatterplot(feat_df, feats[i], feats[j], show=False).data[0]
             fig.add_trace(
                 scatter_trace,
                 row=i+1,
@@ -913,6 +986,12 @@ def composite_summary_plot(
         showlegend=False,
         title=title if title is not None else def_title
     )
+    fig.update_xaxes(title_text="Time", row=1, col=1)
+    fig.update_yaxes(title_text="Value", row=1, col=1)
+    fig.update_xaxes(title_text="Lag", row=2, col=1)
+    fig.update_yaxes(title_text="Value", row=2, col=1)
+    fig.update_xaxes(title_text="Value", row=2, col=2)
+    fig.update_yaxes(title_text="Frequency", row=2, col=2)
 
     # --- Time series ---
     ts_trace = time_series_plot(series, show=False).data[0]
