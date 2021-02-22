@@ -22,13 +22,28 @@ from statsmodels.tsa.stattools import acf, pacf
 from pytsviz.utils import transform_dict, set_time_index, decompose_dict, get_components
 
 plt.rcParams["figure.figsize"] = (10, 6)
-DEFAULT_LAYOUT = {
-    "xaxis": {"showgrid": False, "zeroline": False},
-    "yaxis": {"zeroline": False},
-}
+
+palette = [
+    "#54478C",
+    "#2C699A",
+    "#048BA8",
+    "#0DB39E",
+    "#16DB93",
+    "#83E377",
+    "#B9E769",
+    "#EFEA5A",
+    "#F1C453",
+    "#F29E4C"
+]
+colorway = palette[::2] + palette[1::2]
+colorscale = list(zip(linspace(0, 1, len(palette)), palette))
+colorscale_r = list(zip(linspace(0, 1, len(palette)), palette[::-1]))
 
 template = dict(
     layout=go.Layout(
+        font=dict(
+            family="Rockwell"
+        ),
         xaxis=dict(
             showgrid=False,
             zeroline=False,
@@ -38,17 +53,28 @@ template = dict(
             zeroline=False
         ),
         title_font=dict(
-            family="Rockwell",
-            size=24),
+            size=24
+        ),
         autosize=True,
         height=800,
         margin=dict(
-            l=50,
-            r=50,
-            b=100,
-            t=100,
-            pad=4
+            l=75,
+            r=75,
+            b=75,
+            t=75,
+            pad=3
         ),
+        legend_title=dict(
+            text=""
+        ),
+        colorscale=dict(
+            diverging="Tropic",
+            sequential=colorscale,
+            sequentialminus=colorscale_r
+        ),
+        colorway=colorway,
+        paper_bgcolor='white',
+        plot_bgcolor='white'
     )
 )
 
@@ -60,12 +86,12 @@ def _plot_plotly(
     y_title="",
     x_type="-",
     y_type="-",
-    layout=None,
     **kwargs
 ):
     with pd.option_context("plotting.backend", "plotly"):
         fig = df.plot(
             kind=kind,
+            template=template,
             **kwargs
         )
     fig.update_layout(
@@ -74,8 +100,6 @@ def _plot_plotly(
         xaxis_type=x_type,
         yaxis_type=y_type
     )
-    fig.update_layout(template=template)
-    fig.update_layout(layout)
     return fig
 
 
@@ -100,7 +124,7 @@ def plotly_acf(
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
     if kwargs.get("alpha") is not None:
-        acf_values, conf_int = acf(series, nlags=nlags, **kwargs)
+        acf_values, conf_int = acf(series, nlags=nlags, fft=False, **kwargs)
         acf_values = acf_values[1:]
 
         conf_int = [np.array(x) for x in zip(*conf_int)]
@@ -109,7 +133,7 @@ def plotly_acf(
         c_upper = conf_int[1][1:] - acf_values
 
     else:
-        acf_values = acf(series, nlags=nlags, **kwargs)
+        acf_values = acf(series, nlags=nlags, fft=False, **kwargs)
         acf_values = acf_values[1:]
 
         c_lower = None
@@ -460,6 +484,7 @@ def plot_distribution_histogram(series, bins=None, title="", show=True):
         x_title="Value",
         y_title="Frequency"
     )
+    fig.update_layout(showlegend=False)
 
     if show:
         fig.show()
@@ -588,6 +613,7 @@ def time_series_plot(
         x_title="Time",
         y_title="Value"
     )
+    fig.update_layout(legend_title_text="")
     if show:
         fig.show()
     else:
@@ -614,6 +640,7 @@ def seasonal_time_series_plot(
         df,
         kind="line"
     )
+    fig.update_layout(legend_title_text="")
     if show:
         fig.show()
     else:
@@ -626,7 +653,6 @@ def decomposed_time_series_plot(
         title: str = None,
         method: str = "STL",
         subplots: bool = True,
-        cumulative: bool = True,
         show=True,
         **decomp_kwargs
 ):
@@ -643,7 +669,7 @@ def decomposed_time_series_plot(
         res = res.fit()
     components = get_components(res)
     df = pd.DataFrame(data=components)
-    if not subplots and cumulative:
+    if not subplots:
         for i in range(1, len(df.columns)):
             if kwargs.get("model") == "multiplicative":
                 df.iloc[:, i] *= df.iloc[:, i - 1]
@@ -659,6 +685,7 @@ def decomposed_time_series_plot(
         x_title="Time",
         y_title="Value"
     )
+    fig.update_layout(legend_title_text="")
     if show:
         fig.show()
     else:
@@ -717,7 +744,7 @@ def forecast_plot(
             row=1,
             col=1
         )
-
+    fig.update_layout(legend_title_text="")
     if show:
         fig.show()
     else:
@@ -819,8 +846,8 @@ def scatterplot(
         x=var1,
         y=var2,
         title=title if title is not None else def_title,
-        x_title=var1,
-        y_title=var2,
+        x_title=str(var1),
+        y_title=str(var2),
         **kwargs
     )
     if show:
@@ -843,47 +870,47 @@ def inverse_arma_roots_plot(
     show=True
 ):
     roots = process.arroots
-    re = [x.real for x in roots]
-    im = [x.imag for x in roots]
-    roots_df = pd.DataFrame({"Root": [str(round(r, 5))[1:-1] for r in roots], "Re": re, "Im": im})
+    inv_roots = 1/roots
+    re = [x.real for x in inv_roots]
+    im = [x.imag for x in inv_roots]
+    inv_roots_df = pd.DataFrame({"Root": [str(round(r, 5))[1:-1] for r in inv_roots], "Re": re, "Im": im})
 
     layout = dict(
         yaxis=dict(
             scaleanchor="x",
             scaleratio=1,
             zeroline=True,
-            dtick=0.5,
+            dtick=0.25,
             gridwidth=0.1,
             gridcolor='grey',
             zerolinecolor='grey',
             zerolinewidth=2,
-            title="Im"
+            title="Im(1/root)"
         ),
         xaxis=dict(
             showgrid=True,
             zeroline=True,
-            dtick=0.5,
+            dtick=0.25,
             gridwidth=0.1,
             gridcolor='grey',
             zerolinecolor='grey',
             zerolinewidth=2,
-            title="Re"
+            title="Re(1/root)"
         )
     )
 
     fig = _plot_plotly(
-        roots_df,
+        inv_roots_df,
         kind="scatter",
         x=re,
         y=im,
-        title=f"Inverse arma roots",
-        hover_name="Root",
-        layout=layout
+        title=f"Inverse ARMA roots"
     )
     fig.add_shape(type="circle",
                   xref="x", yref="y",
                   x0=-1, y0=-1, x1=1, y1=1
                   )
+    fig.update_layout(layout)
 
     if show:
         fig.show()
