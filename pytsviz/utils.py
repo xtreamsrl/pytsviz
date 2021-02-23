@@ -63,22 +63,10 @@ def moving_average(x, w):
 
 
 transform_dict = {
-    "Box-Cox": {
-        boxcox: {
-            }
-    },
-    "Yeo-Johnson": {
-        yeojohnson: {
-        }
-    },
-    "log": {
-        np.vectorize(math.log): {
-        }
-    },
-    "moving_average": {
-        moving_average: {
-        }
-    }
+    "Box-Cox": boxcox,
+    "Yeo-Johnson": yeojohnson,
+    "log": np.vectorize(math.log),
+    "moving_average": moving_average
 }
 
 decompose_dict = {
@@ -94,13 +82,6 @@ decompose_dict = {
     "seasonal_multiplicative": {
         seasonal_decompose: {
             "model": "multiplicative"
-        }
-    },
-    "harmonic": {
-        UnobservedComponents: {
-            "level": "fixed intercept",
-            "freq_seasonal": [{'period': 50}],
-
         }
     }
 }

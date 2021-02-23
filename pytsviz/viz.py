@@ -571,8 +571,7 @@ def time_series_plot(
         y_cols: List[str] = None,
         time_col: str = None,
         title: str = None,
-        tf: str = None,
-        custom_tf: Callable[[Iterable], Iterable] = None,
+        tf: Union[str, Callable[[Iterable], Iterable]] = None,
         tf_args: Tuple = (),
         tf_kwargs: dict = None,
         keep_original: bool = True,
@@ -585,14 +584,8 @@ def time_series_plot(
     if y_cols:
         df = df.filter(items=y_cols)
     if tf:
-        transformation = transform_dict[tf]
-        tf_func = list(transformation.keys())[0]
-        kwargs = transformation[tf_func]
-        kwargs.update(tf_kwargs)
-        transformed_df = df.apply(tf_func, args=tf_args, **kwargs).add_prefix(f"{tf}(").add_suffix(")")
-        df = pd.concat([df, transformed_df], axis=1) if keep_original else transformed_df
-    if custom_tf:
-        transformed_df = df.apply(custom_tf, args=tf_args, **kwargs).add_prefix('tf(').add_suffix(")")
+        transformation = transform_dict.get(tf, tf)
+        transformed_df = df.apply(transformation, args=tf_args, **tf_kwargs).add_prefix(f"{tf}(").add_suffix(")")
         df = pd.concat([df, transformed_df], axis=1) if keep_original else transformed_df
 
     def_title = "Time series (" + ", ".join(y_cols) + ")" if y_cols else "Time series"
@@ -612,10 +605,10 @@ def time_series_plot(
 
 def seasonal_time_series_plot(
         ts_df: pd.DataFrame,
+        period: Union[str, Tuple[Callable[[pd.DatetimeIndex], Any]], Callable[[pd.DatetimeIndex], Any]],
         ts_col: str = None,
         time_col: str = None,
         title: str = None,
-        period: Union[str, Tuple[Callable[[pd.DatetimeIndex], Any]], Callable[[pd.DatetimeIndex], Any]] = "day",
         subplots=False,
         show=True
 ):
@@ -666,9 +659,9 @@ def seasonal_time_series_plot(
 
 def decomposed_time_series_plot(
         ts_df: pd.DataFrame,
+        method: str,
         time_col: str = None,
         title: str = None,
-        method: str = "STL",
         subplots: bool = True,
         show=True,
         **decomp_kwargs
