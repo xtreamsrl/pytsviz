@@ -423,20 +423,20 @@ def plotly_tsdisplay(
     # --- PACF ---
     pacf_traces = plotly_pacf(series, nlags=lags, alpha=alpha, show=False).data
 
-    fig.append_trace(
+    fig.add_trace(
         periodogram_trace,
         row=1,
         col=1
     )
     for trace in acf_traces:
-        fig.append_trace(
+        fig.add_trace(
             trace,
             row=2,
             col=1
         )
 
     for trace in pacf_traces:
-        fig.append_trace(
+        fig.add_trace(
             trace,
             row=2,
             col=2
@@ -532,22 +532,23 @@ def plot_gof(
     )
     ts_traces = time_series_plot(df, y_cols=[y_col, y_hat_col], show=False).data
     for trace in ts_traces:
-        fig.append_trace(
+        fig.add_trace(
             trace,
             row=1,
             col=1
         )
 
     res_trace = time_series_plot(df, y_cols=["Resid"], show=False).data[0]
-    fig.append_trace(
+    res_trace["line"]["color"] = colorway[2]
+    fig.add_trace(
         res_trace,
         row=2,
-        col=1
+        col=1,
     )
 
     scatter_traces = scatterplot(df, y_col, y_hat_col, fit=True, show=False).data
     for trace in scatter_traces:
-        fig.append_trace(
+        fig.add_trace(
             trace,
             row=1,
             col=2,
@@ -1035,19 +1036,19 @@ def composite_summary_plot(
     # --- Distribution ---
     dist_trace = plot_distribution_histogram(series, show=False).data[0]
 
-    fig.append_trace(
+    fig.add_trace(
         ts_trace,
         row=1,
         col=1
     )
     for trace in acf_traces:
-        fig.append_trace(
+        fig.add_trace(
             trace,
             row=2,
             col=1
         )
 
-    fig.append_trace(
+    fig.add_trace(
         dist_trace,
         row=2,
         col=2
