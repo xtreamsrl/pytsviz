@@ -7,20 +7,19 @@ import numpy as np
 import pandas as pd
 import plotly
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+import plotly.express as px
 from matplotlib import gridspec
 from matplotlib import pyplot as plt
 from numpy.core import linspace
-from plotly.subplots import make_subplots
-import plotly.express as px
 from scipy.signal import periodogram
 from scipy.stats import pearsonr
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa._stl import STL
 from statsmodels.tsa.arima_process import ArmaProcess
-from statsmodels.tsa.statespace.structural import UnobservedComponents
 from statsmodels.tsa.stattools import acf, pacf
 
-from pytsviz.utils import transform_dict, set_time_index, decompose_dict, get_components, valid_seasons, \
+from pytsviz.utils import transform_dict, set_time_index, decomp_methods, get_components, valid_seasons, \
     apply_grad_color_to_traces
 
 plt.rcParams["figure.figsize"] = (10, 6)
@@ -61,7 +60,7 @@ template = dict(
         colorscale=dict(
             diverging=div_colorscale,
             sequential=seq_colorscale,
-            sequentialminus=seq_colorscale
+            sequentialminus=seq_colorscale[::-1]
         ),
         colorway=colorway,
         paper_bgcolor='white',
@@ -668,14 +667,12 @@ def decomposed_time_series_plot(
 ):
     df = ts_df.copy()
     set_time_index(df, time_col)
-    decomp_model = decompose_dict[method]
+    decomp_model = decomp_methods[method]
     decomp_func = list(decomp_model.keys())[0]
     kwargs = decomp_model[decomp_func]
     kwargs.update(decomp_kwargs)
     res = decomp_func(df, **kwargs)
     if decomp_func is STL:
-        res = res.fit()
-    if decomp_func is UnobservedComponents:
         res = res.fit()
     components = get_components(res)
     df = pd.DataFrame(data=components)

@@ -11,7 +11,55 @@ from colour import Color
 from scipy import stats
 from statsmodels.tsa._stl import STL
 from statsmodels.tsa.seasonal import seasonal_decompose
-from statsmodels.tsa.statespace.structural import UnobservedComponents
+
+
+decomp_methods = {
+    "STL": {
+        STL: {
+        }
+    },
+    "seasonal_additive": {
+        seasonal_decompose: {
+            "model": "additive"
+        }
+    },
+    "seasonal_multiplicative": {
+        seasonal_decompose: {
+            "model": "multiplicative"
+        }
+    }
+}
+
+valid_components = [
+    "level",
+    "trend",
+    "seasonal",
+    "freq_seasonal",
+    "cycle",
+    "autoregressive",
+    "resid"
+]
+
+valid_seasons = {
+    "grouping": {
+        "minute": lambda x: x.minute,
+        "hour": lambda x: x.hour,
+        "day": lambda x: x.isocalendar().day,
+        "week": lambda x: x.isocalendar().week,
+        "month": lambda x: x.month,
+        "quarter": lambda x: (x.month - 1) // 3 + 1,
+        "year": lambda x: x.isocalendar().year
+    },
+    "granularity": {
+        "minute": lambda x: x.second,
+        "hour": lambda x: x.minute,
+        "day": lambda x: x.hour,
+        "week": lambda x: x.isocalendar().day,
+        "month": lambda x: x.day,
+        "quarter": lambda x: (x - pd.PeriodIndex(x, freq='Q').start_time).days + 1,
+        "year": lambda x: x.dayofyear
+    }
+}
 
 
 def harmonics(dates, period, n, epoch=datetime(1900, 1, 1)):
@@ -67,54 +115,6 @@ transform_dict = {
     "Yeo-Johnson": yeojohnson,
     "log": np.vectorize(math.log),
     "moving_average": moving_average
-}
-
-decompose_dict = {
-    "STL": {
-        STL: {
-        }
-    },
-    "seasonal_additive": {
-        seasonal_decompose: {
-            "model": "additive"
-        }
-    },
-    "seasonal_multiplicative": {
-        seasonal_decompose: {
-            "model": "multiplicative"
-        }
-    }
-}
-
-valid_components = [
-    "level",
-    "trend",
-    "seasonal",
-    "freq_seasonal",
-    "cycle",
-    "autoregressive",
-    "resid"
-]
-
-valid_seasons = {
-    "grouping": {
-        "minute": lambda x: x.minute,
-        "hour": lambda x: x.hour,
-        "day": lambda x: x.isocalendar().day,
-        "week": lambda x: x.isocalendar().week,
-        "month": lambda x: x.month,
-        "quarter": lambda x: (x.month - 1) // 3 + 1,
-        "year": lambda x: x.isocalendar().year
-    },
-    "granularity": {
-        "minute": lambda x: x.second,
-        "hour": lambda x: x.minute,
-        "day": lambda x: x.hour,
-        "week": lambda x: x.isocalendar().day,
-        "month": lambda x: x.day,
-        "quarter": lambda x: (x - pd.PeriodIndex(x, freq='Q').start_time).days + 1,
-        "year": lambda x: x.dayofyear
-    }
 }
 
 
