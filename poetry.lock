@@ -237,6 +237,17 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "colour"
+version = "0.1.5"
+description = "converts and manipulates various color representation (HSL, RVB, web, X11, ...)"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+test = ["nose"]
+
+[[package]]
 name = "commitizen"
 version = "2.14.1"
 description = "Python commitizen client tool"
@@ -1634,7 +1645,7 @@ notebook = ">=4.4.1"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "abe370b8c2f8612068ebd1b77c96b987f60f26b5ecea3c149e5843a0960552e3"
+content-hash = "527626917d0147b40dbc0f9e6823382c273209dacc16906b5848abb0ca4b1eb6"
 
 [metadata.files]
 alabaster = [
@@ -1764,6 +1775,10 @@ click = [
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
+]
+colour = [
+    {file = "colour-0.1.5-py2.py3-none-any.whl", hash = "sha256:33f6db9d564fadc16e59921a56999b79571160ce09916303d35346dddc17978c"},
+    {file = "colour-0.1.5.tar.gz", hash = "sha256:af20120fefd2afede8b001fbef2ea9da70ad7d49fafdb6489025dae8745c3aee"},
 ]
 commitizen = [
     {file = "commitizen-2.14.1-py3-none-any.whl", hash = "sha256:858854f1a6a8e43c18efcd5482f5c1a203c6c44b399fef293499dad7108d6627"},

@@ -5,6 +5,7 @@ from itertools import product
 from typing import List, Callable, Iterable, Tuple, Any, Union
 import numpy as np
 import pandas as pd
+import plotly
 import plotly.graph_objs as go
 from matplotlib import gridspec
 from matplotlib import pyplot as plt
@@ -19,25 +20,15 @@ from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.statespace.structural import UnobservedComponents
 from statsmodels.tsa.stattools import acf, pacf
 
-from pytsviz.utils import transform_dict, set_time_index, decompose_dict, get_components, valid_seasons
+from pytsviz.utils import transform_dict, set_time_index, decompose_dict, get_components, valid_seasons, \
+    apply_grad_color_to_traces
 
 plt.rcParams["figure.figsize"] = (10, 6)
 
-palette = [
-    "#54478C",
-    "#2C699A",
-    "#048BA8",
-    "#0DB39E",
-    "#16DB93",
-    "#83E377",
-    "#B9E769",
-    "#EFEA5A",
-    "#F1C453",
-    "#F29E4C"
-]
-colorway = palette[::2] + palette[1::2]
-colorscale = list(zip(linspace(0, 1, len(palette)), palette))
-colorscale_r = list(zip(linspace(0, 1, len(palette)), palette[::-1]))
+colorway = plotly.colors.qualitative.Dark24
+seq_colorscale = plotly.colors.sequential.PuBuGn
+seq_colorscale_bounds = ["#FFF7FB", "#014636"]
+div_colorscale = plotly.colors.diverging.Fall
 
 template = dict(
     layout=go.Layout(
@@ -68,9 +59,9 @@ template = dict(
             text=""
         ),
         colorscale=dict(
-            diverging="Tropic",
-            sequential=colorscale,
-            sequentialminus=colorscale_r
+            diverging=div_colorscale,
+            sequential=seq_colorscale,
+            sequentialminus=seq_colorscale
         ),
         colorway=colorway,
         paper_bgcolor='white',
@@ -659,7 +650,10 @@ def seasonal_time_series_plot(
             x_title="Time",
             y_title="Value"
         )
-    except ValueError:
+        apply_grad_color_to_traces(fig, seq_colorscale_bounds[0], seq_colorscale_bounds[1])
+
+    except ValueError as e:
+        print(e)
         print("The selected seasonality cannot be displayed in subplots (too many traces). Try setting subplots=False.")
         return
 

@@ -7,6 +7,7 @@ import math
 from datetime import datetime
 import numpy as np
 import pandas as pd
+from colour import Color
 from scipy import stats
 from statsmodels.tsa._stl import STL
 from statsmodels.tsa.seasonal import seasonal_decompose
@@ -147,3 +148,14 @@ def get_components(result):
         if c in dir(result):
             components[c] = getattr(result, c)
     return components
+
+
+def make_granular_colorscale(col1, col2, n):
+    return [c.hex for c in Color(col1).range_to(col2, n)]
+
+
+def apply_grad_color_to_traces(fig, col1, col2):
+    n_traces = len(fig['data'])
+    custom_colorscale = make_granular_colorscale(col1, col2, n_traces)
+    for i in range(n_traces):
+        fig['data'][i]['line']['color'] = custom_colorscale[i]

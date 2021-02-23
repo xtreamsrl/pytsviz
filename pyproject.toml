@@ -15,6 +15,7 @@ scipy = "^1.4.1"
 statsmodels = "^0.12.2"
 matplotlib = "^3.2.1"
 sklearn = "^0.0"
+colour = "^0.1.5"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^20.8b1", allow-prereleases = true}
