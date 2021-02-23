@@ -2,7 +2,7 @@
 The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (partial) correlograms, periodograms, line plots, ...
 """
 from itertools import product
-from typing import List, Callable, Iterable, Tuple
+from typing import List, Callable, Iterable, Tuple, Any, Union
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
@@ -19,7 +19,7 @@ from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.statespace.structural import UnobservedComponents
 from statsmodels.tsa.stattools import acf, pacf
 
-from pytsviz.utils import transform_dict, set_time_index, decompose_dict, get_components
+from pytsviz.utils import transform_dict, set_time_index, decompose_dict, get_components, valid_seasons
 
 plt.rcParams["figure.figsize"] = (10, 6)
 
@@ -80,13 +80,13 @@ template = dict(
 
 
 def _plot_plotly(
-    df,
-    kind,
-    x_title="",
-    y_title="",
-    x_type="-",
-    y_type="-",
-    **kwargs
+        df,
+        kind,
+        x_title="",
+        y_title="",
+        x_type="-",
+        y_type="-",
+        **kwargs
 ):
     with pd.option_context("plotting.backend", "plotly"):
         fig = df.plot(
@@ -123,7 +123,7 @@ def plotly_acf(
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
-    if kwargs.get("alpha") is not None:
+    if kwargs.get("alpha"):
         acf_values, conf_int = acf(series, nlags=nlags, fft=False, **kwargs)
         acf_values = acf_values[1:]
 
@@ -152,7 +152,7 @@ def plotly_acf(
         kind="bar",
         x="lag",
         y="acf",
-        title=title if title is not None else def_title,
+        title=title if title else def_title,
         error_y=c_upper,
         error_y_minus=c_lower,
         x_title="Lag",
@@ -207,7 +207,7 @@ def plotly_pacf(
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
-    if kwargs.get("alpha") is not None:
+    if kwargs.get("alpha"):
         pacf_values, conf_int = pacf(series, nlags=nlags, **kwargs)
         pacf_values = pacf_values[1:]
 
@@ -235,7 +235,7 @@ def plotly_pacf(
         kind="bar",
         x="lag",
         y="pacf",
-        title=title if title is not None else def_title,
+        title=title if title else def_title,
         error_y=c_upper,
         error_y_minus=c_lower,
         x_title="Lag",
@@ -271,14 +271,14 @@ def plotly_pacf(
 
 
 def plotly_psd(
-    series,
-    nfft=None,
-    fs=1,
-    min_period=0,
-    max_period=np.inf,
-    plot_time=False,
-    title=None,
-    **kwargs
+        series,
+        nfft=None,
+        fs=1,
+        min_period=0,
+        max_period=np.inf,
+        plot_time=False,
+        title=None,
+        **kwargs
 ):
     """
     Interactive histogram of the spectral density of a time series
@@ -313,16 +313,16 @@ def plotly_psd(
         kind="hist",
         x_title="Period" if plot_time else "Frequency",
         y_title="Density",
-        title=title if title is not None else def_title,
+        title=title if title else def_title,
     )
 
 
 def tsdisplay(
-    series,
-    nfft=None,
-    lags=None,
-    plot_time=True,
-    title="Time series analysis",
+        series,
+        nfft=None,
+        lags=None,
+        plot_time=True,
+        title="Time series analysis",
 ):
     """
     Comprehensive matplotlib plot showing: line plot of time series, spectral density, ACF and PACF.
@@ -374,7 +374,6 @@ def plotly_tsdisplay(
         show=True,
         title=None
 ):
-
     """
     Comprehensive plotly plot showing: line plot of time series, spectral density, ACF and PACF.
 
@@ -400,7 +399,7 @@ def plotly_tsdisplay(
     fig.update_layout(
         template=template,
         showlegend=False,
-        title=title if title is not None else def_title
+        title=title if title else def_title
     )
     fig.update_xaxes(title_text="Frequency", row=1, col=1)
     fig.update_yaxes(title_text="Density", row=1, col=1)
@@ -499,9 +498,9 @@ def plot_gof(
         time_col: str = None,
         title="Goodness of Fit",
         subplot_titles=(
-            "Actual vs Predicted Series",
-            "Actual vs Predicted Scatter",
-            "Residuals"
+                "Actual vs Predicted Series",
+                "Actual vs Predicted Scatter",
+                "Residuals"
         ),
         show=True
 ):
@@ -592,24 +591,24 @@ def time_series_plot(
         tf_kwargs = {}
     df = ts_df.copy()
     set_time_index(df, time_col)
-    if y_cols is not None:
+    if y_cols:
         df = df.filter(items=y_cols)
-    if tf is not None:
+    if tf:
         transformation = transform_dict[tf]
         tf_func = list(transformation.keys())[0]
         kwargs = transformation[tf_func]
         kwargs.update(tf_kwargs)
         transformed_df = df.apply(tf_func, args=tf_args, **kwargs).add_prefix(f"{tf}(").add_suffix(")")
         df = pd.concat([df, transformed_df], axis=1) if keep_original else transformed_df
-    if custom_tf is not None:
+    if custom_tf:
         transformed_df = df.apply(custom_tf, args=tf_args, **kwargs).add_prefix('tf(').add_suffix(")")
         df = pd.concat([df, transformed_df], axis=1) if keep_original else transformed_df
 
-    def_title = "Time series (" + ", ".join(y_cols) + ")" if y_cols is not None else "Time series"
+    def_title = "Time series (" + ", ".join(y_cols) + ")" if y_cols else "Time series"
     fig = _plot_plotly(
         df,
         kind="line",
-        title=title if title is not None else def_title,
+        title=title if title else def_title,
         x_title="Time",
         y_title="Value"
     )
@@ -622,24 +621,48 @@ def time_series_plot(
 
 def seasonal_time_series_plot(
         ts_df: pd.DataFrame,
+        ts_col: str = None,
         time_col: str = None,
-        period=1,
+        title: str = None,
+        period: Union[str, Tuple[Callable[[pd.DatetimeIndex], Any]], Callable[[pd.DatetimeIndex], Any]] = "day",
+        subplots=False,
         show=True
 ):
     df = ts_df.copy()
     set_time_index(df, time_col)
-    beginning, duration, wrap = period
-    diff_index = [t.to_pydatetime() - beginning for t in df.index]
-    zipped_division = [divmod(diff, duration) for diff in diff_index]
-    q_list, r_list = list(zip(*zipped_division))
-    df["period"] = q_list
-    df["new_index"] = [r.days for r in r_list]
-    df = df.pivot(index="new_index", columns="period", values="y")
+    ts_col = ts_col if ts_col else df.columns[0]
+    season = period if isinstance(period, str) else "season"
 
-    fig = _plot_plotly(
-        df,
-        kind="line"
-    )
+    try:
+        df[season] = valid_seasons["grouping"].get(period, period[0])(df.index)
+        df.index = valid_seasons["granularity"].get(period, period[1])(df.index)
+    except TypeError:
+        print("'Period' param must be either a valid string ('minute', 'hour', 'day', 'week', 'month', 'quarter', "
+              "'year') or a custom function computing season from df.index.")
+        return
+
+    try:
+        df = df.pivot(columns=season, values=ts_col)
+    except ValueError:
+        print("The selected seasonality is not suited for this dataframe due to its time span and/or its granularity."
+              " You can try with a custom one or adjust your dataframe.")
+        return
+
+    def_title = f"Time series by {season}"
+
+    try:
+        fig = _plot_plotly(
+            df,
+            kind="line",
+            facet_row=season if subplots else None,
+            title=title if title else def_title,
+            x_title="Time",
+            y_title="Value"
+        )
+    except ValueError:
+        print("The selected seasonality cannot be displayed in subplots (too many traces). Try setting subplots=False.")
+        return
+
     fig.update_layout(legend_title_text="")
     if show:
         fig.show()
@@ -681,7 +704,7 @@ def decomposed_time_series_plot(
         df,
         kind="line",
         facet_row='variable' if subplots else None,
-        title=title if title is not None else def_title,
+        title=title if title else def_title,
         x_title="Time",
         y_title="Value"
     )
@@ -710,11 +733,11 @@ def forecast_plot(
     fig = _plot_plotly(
         line_df,
         kind="line",
-        title=title if title is not None else def_title,
+        title=title if title else def_title,
         x_title="Time",
         y_title="Value"
     )
-    if upper_col is not None:
+    if upper_col:
         fig.add_trace(
             go.Scatter(
                 name='Upper Bound',
@@ -728,7 +751,7 @@ def forecast_plot(
             row=1,
             col=1
         )
-    if lower_col is not None:
+    if lower_col:
         fig.add_trace(
             go.Scatter(
                 name='Lower Bound',
@@ -769,14 +792,14 @@ def vars_scatterplot(
     else:
         sel_vars = [var1, var2]
         scatter_df = df.filter(items=sel_vars)  # if var2 is None else df.filter(items=[var1, var2])
-        if lags1 is not None:
+        if lags1:
             for lag in lags1:
                 scatter_df[f"{var1} lag({lag})"] = df[var1].shift(periods=lag, axis=0)
-        if lags2 is not None:
+        if lags2:
             for lag in lags2:
                 scatter_df[f"{var2} lag({lag})"] = df[var2].shift(periods=lag, axis=0)
 
-        sel_vars_string = ", ".join(sel_vars) if var2 is not None else var1
+        sel_vars_string = ", ".join(sel_vars) if var2 else var1
 
         feats = list(scatter_df.columns)
         n = len(feats)
@@ -793,7 +816,7 @@ def vars_scatterplot(
         fig.update_layout(
             template=template,
             showlegend=False,
-            title=title if title is not None else def_title
+            title=title if title else def_title
         )
 
         for x_var, y_var in product(feats_cols, feats_rows):
@@ -845,7 +868,7 @@ def scatterplot(
         kind="scatter",
         x=var1,
         y=var2,
-        title=title if title is not None else def_title,
+        title=title if title else def_title,
         x_title=str(var1),
         y_title=str(var2),
         **kwargs
@@ -866,11 +889,11 @@ def scatterplot(
 
 
 def inverse_arma_roots_plot(
-    process: ArmaProcess,
-    show=True
+        process: ArmaProcess,
+        show=True
 ):
     roots = process.arroots
-    inv_roots = 1/roots
+    inv_roots = 1 / roots
     re = [x.real for x in inv_roots]
     im = [x.imag for x in inv_roots]
     inv_roots_df = pd.DataFrame({"Root": [str(round(r, 5))[1:-1] for r in inv_roots], "Re": re, "Im": im})
@@ -926,7 +949,7 @@ def composite_matrix_scatterplot(
 ):
     df = feat_df.copy()
     set_time_index(df, time_col)
-    if y_cols is not None:
+    if y_cols:
         df = df.filter(items=y_cols)
     feats = df.columns
     indices = list(range(len(feats)))
@@ -941,7 +964,7 @@ def composite_matrix_scatterplot(
     fig.update_layout(
         template=template,
         showlegend=False,
-        title=title if title is not None else def_title
+        title=title if title else def_title
     )
 
     for i, j in product(indices, indices):
@@ -952,8 +975,8 @@ def composite_matrix_scatterplot(
             scatter_trace = scatterplot(feat_df, feats[i], feats[j], show=False).data[0]
             fig.add_trace(
                 scatter_trace,
-                row=i+1,
-                col=j+1
+                row=i + 1,
+                col=j + 1
             )
         elif i < j:
             # --- Correlation coefficient ---
@@ -997,7 +1020,6 @@ def composite_summary_plot(
         show=True,
         title=None
 ):
-
     if lags is None:
         lags = int(len(series) / 2 - 1)
 
@@ -1011,7 +1033,7 @@ def composite_summary_plot(
     fig.update_layout(
         template=template,
         showlegend=False,
-        title=title if title is not None else def_title
+        title=title if title else def_title
     )
     fig.update_xaxes(title_text="Time", row=1, col=1)
     fig.update_yaxes(title_text="Value", row=1, col=1)

@@ -5,7 +5,6 @@ The *utils* module contains utilies not strictly related to visualization which 
 import datetime as dt
 import math
 from datetime import datetime
-
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -114,6 +113,27 @@ valid_components = [
     "autoregressive",
     "resid"
 ]
+
+valid_seasons = {
+    "grouping": {
+        "minute": lambda x: x.minute,
+        "hour": lambda x: x.hour,
+        "day": lambda x: x.isocalendar().day,
+        "week": lambda x: x.isocalendar().week,
+        "month": lambda x: x.month,
+        "quarter": lambda x: (x.month - 1) // 3 + 1,
+        "year": lambda x: x.isocalendar().year
+    },
+    "granularity": {
+        "minute": lambda x: x.second,
+        "hour": lambda x: x.minute,
+        "day": lambda x: x.hour,
+        "week": lambda x: x.isocalendar().day,
+        "month": lambda x: x.day,
+        "quarter": lambda x: (x - pd.PeriodIndex(x, freq='Q').start_time).days + 1,
+        "year": lambda x: x.dayofyear
+    }
+}
 
 
 def set_time_index(df, time_col):
