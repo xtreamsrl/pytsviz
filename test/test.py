@@ -10,8 +10,7 @@ from pytsviz.viz import plotly_acf, plotly_pacf, plotly_psd, plotly_tsdisplay, p
 
 data_path = os.path.join(root_path, "data", "crypto.csv")
 
-df = pd.read_csv(data_path)
-print(df)
+df = pd.read_csv(data_path, index_col=0, parse_dates=True, dayfirst=True)
 
 
 def test_args_are_unchanged(
