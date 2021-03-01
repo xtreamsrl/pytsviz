@@ -2,7 +2,7 @@
 The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (partial) correlograms, periodograms, line plots, ...
 """
 from itertools import product
-from typing import List, Callable, Iterable, Tuple, Any, Union
+from typing import List, Callable, Iterable, Tuple, Any, Union, Literal
 import numpy as np
 import pandas as pd
 import plotly
@@ -19,14 +19,14 @@ from statsmodels.tsa._stl import STL
 from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.stattools import acf, pacf
 
-from pytsviz.utils import transform_dict, set_time_index, decomp_methods, get_components, valid_seasons, \
-    apply_grad_color_to_traces
+from pytsviz.utils import set_time_index, get_components, apply_grad_color_to_traces
+from pytsviz.vars import transform_dict, valid_seasons, decomp_methods
 
 plt.rcParams["figure.figsize"] = (10, 6)
 
 colorway = plotly.colors.qualitative.Dark24
 seq_colorscale = plotly.colors.sequential.PuBuGn
-seq_colorscale_bounds = ["#FFF7FB", "#014636"]
+seq_colorscale_bounds = ["#FFF7FB", "#014636"]  # extremes of "PuBuGn", for building arbitrarily granular color grads
 div_colorscale = plotly.colors.diverging.Fall
 
 template = dict(
@@ -486,11 +486,15 @@ def plot_gof(
         y_col: str,
         y_hat_col: str,
         time_col: str = None,
+        lags: int = None,
+        alpha=0.1,
         title="Goodness of Fit",
         subplot_titles=(
                 "Actual vs Predicted Series",
                 "Actual vs Predicted Scatter",
-                "Residuals"
+                "Residuals",
+                "Residuals ACF",
+                "Residuals PACF"
         ),
         show=True
 ):
@@ -519,11 +523,12 @@ def plot_gof(
     df["Resid"] = df[y_col] - df[y_hat_col]
 
     fig = make_subplots(
-        rows=2,
+        rows=3,
         cols=2,
         subplot_titles=subplot_titles,
         specs=[[{}, {"rowspan": 2}],
-               [{}, None]],
+               [{}, None],
+               [{}, {}]],
     )
     fig.update_layout(
         template=template,
@@ -553,12 +558,36 @@ def plot_gof(
             row=1,
             col=2,
         )
+
+    if lags is None:
+        lags = int(len(df["Resid"].dropna()) / 2 - 1)
+
+    resid_acf_traces = plotly_acf(df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
+    for trace in resid_acf_traces:
+        fig.add_trace(
+            trace,
+            row=3,
+            col=1,
+        )
+
+    resid_pacf_traces = plotly_pacf(df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
+    for trace in resid_pacf_traces:
+        fig.add_trace(
+            trace,
+            row=3,
+            col=2,
+        )
+
     fig.update_xaxes(title_text="Time", row=1, col=1)
     fig.update_yaxes(title_text="Value", row=1, col=1)
     fig.update_xaxes(title_text="Time", row=2, col=1)
     fig.update_yaxes(title_text="Value", row=2, col=1)
     fig.update_xaxes(title_text=y_col, row=1, col=2)
     fig.update_yaxes(title_text=y_hat_col, row=1, col=2)
+    fig.update_xaxes(title_text="Lag", row=3, col=1)
+    fig.update_yaxes(title_text="Value", row=3, col=1)
+    fig.update_xaxes(title_text="Lag", row=3, col=2)
+    fig.update_yaxes(title_text="Value", row=3, col=2)
 
     if show:
         fig.show()
@@ -835,14 +864,13 @@ def scatterplot(
         var2: str,
         time_col: str = None,
         title: str = None,
-        fit=False,
-        show_stats_summary: bool = False,
+        fit: Union[bool, Literal["summary"]] = False,
         show=True,
         **kwargs
 ):
     df = feat_df.copy()
     set_time_index(df, time_col)
-    if fit:
+    if fit is not False:
         fit_dict = {"trendline": "ols"}
         fit_dict.update(**kwargs)
         kwargs = fit_dict
@@ -860,12 +888,12 @@ def scatterplot(
     )
     if show:
         fig.show()
-        if kwargs.get("trendline") == "ols" and show_stats_summary:
+        if kwargs.get("trendline") == "ols" and fit == "summary":
             results = px.get_trendline_results(fig)
             results = results.iloc[0]["px_fit_results"].summary()
             print(results)
     else:
-        if kwargs.get("trendline") == "ols" and show_stats_summary:
+        if kwargs.get("trendline") == "ols" and fit == "summary":
             results = px.get_trendline_results(fig)
             results = results.iloc[0]["px_fit_results"].summary()
             return fig, results
