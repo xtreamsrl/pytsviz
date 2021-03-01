@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from colour import Color
 from scipy import stats
-from pytsviz.vars import valid_components
+from pytsviz import global_vars
 
 
 def harmonics(dates, period, n, epoch=datetime(1900, 1, 1)):
@@ -66,7 +66,7 @@ def set_time_index(df, time_col):
 
 def get_components(result):
     components = {}
-    for c in valid_components:
+    for c in global_vars.valid_components:
         if c in dir(result):
             components[c] = getattr(result, c)
     return components

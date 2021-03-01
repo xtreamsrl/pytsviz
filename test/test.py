@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Callable, Tuple
 import pandas as pd
 
-from pytsviz.vars import root_path
+from pytsviz.global_vars import root_path
 from pytsviz.viz import plotly_acf, plotly_pacf, plotly_psd, plotly_tsdisplay, plot_distribution_histogram, plot_gof, \
     time_series_plot, seasonal_time_series_plot, decomposed_time_series_plot, forecast_plot, vars_scatterplot, \
     scatterplot, inverse_arma_roots_plot, composite_matrix_scatterplot, composite_summary_plot

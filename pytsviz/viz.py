@@ -19,8 +19,8 @@ from statsmodels.tsa._stl import STL
 from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.stattools import acf, pacf
 
+from pytsviz import global_vars
 from pytsviz.utils import set_time_index, get_components, apply_grad_color_to_traces
-from pytsviz.vars import transform_dict, valid_seasons, decomp_methods
 
 plt.rcParams["figure.figsize"] = (10, 6)
 
@@ -613,7 +613,7 @@ def time_series_plot(
     if y_cols:
         df = df.filter(items=y_cols)
     if tf:
-        transformation = transform_dict.get(tf, tf)
+        transformation = global_vars.transform_dict.get(tf, tf)
         transformed_df = df.apply(transformation, args=tf_args, **tf_kwargs).add_prefix(f"{tf}(").add_suffix(")")
         df = pd.concat([df, transformed_df], axis=1) if keep_original else transformed_df
 
@@ -647,8 +647,8 @@ def seasonal_time_series_plot(
     season = period if isinstance(period, str) else "season"
 
     try:
-        df[season] = valid_seasons["grouping"].get(period, period[0])(df.index)
-        df.index = valid_seasons["granularity"].get(period, period[1])(df.index)
+        df[season] = global_vars.valid_seasons["grouping"].get(period, period[0])(df.index)
+        df.index = global_vars.valid_seasons["granularity"].get(period, period[1])(df.index)
     except TypeError:
         print("'Period' param must be either a valid string ('minute', 'hour', 'day', 'week', 'month', 'quarter', "
               "'year') or a custom function computing season from df.index.")
@@ -697,7 +697,7 @@ def decomposed_time_series_plot(
 ):
     df = ts_df.copy()
     set_time_index(df, time_col)
-    decomp_model = decomp_methods[method]
+    decomp_model = global_vars.decomp_methods[method]
     decomp_func = list(decomp_model.keys())[0]
     kwargs = decomp_model[decomp_func]
     kwargs.update(decomp_kwargs)
