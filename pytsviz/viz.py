@@ -19,89 +19,74 @@ from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.stattools import acf, pacf
 
 from pytsviz import global_vars
-from pytsviz.utils import set_time_index, get_components, apply_grad_color_to_traces
+from pytsviz.utils import (
+    set_time_index,
+    get_components,
+    apply_grad_color_to_traces,
+)
 
 plt.rcParams["figure.figsize"] = (10, 6)
 
 colorway = plotly.colors.qualitative.Dark24
 seq_colorscale = plotly.colors.sequential.PuBuGn
-seq_colorscale_bounds = ["#FFF7FB", "#014636"]  # extremes of "PuBuGn", for building arbitrarily granular color grads
+seq_colorscale_bounds = [
+    "#FFF7FB",
+    "#014636",
+]  # extremes of "PuBuGn", for building arbitrarily granular color grads
 div_colorscale = plotly.colors.diverging.Fall
 
 template = dict(
     layout=go.Layout(
-        font=dict(
-            family="Rockwell"
-        ),
-        xaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            automargin=True
-        ),
-        yaxis=dict(
-            zeroline=False
-        ),
-        title_font=dict(
-            size=24
-        ),
+        font=dict(family="Rockwell"),
+        xaxis=dict(showgrid=False, zeroline=False, automargin=True),
+        yaxis=dict(zeroline=False),
+        title_font=dict(size=24),
         autosize=True,
         height=800,
-        margin=dict(
-            l=75,
-            r=75,
-            b=75,
-            t=75,
-            pad=3
-        ),
-        legend_title=dict(
-            text=""
-        ),
+        margin=dict(l=75, r=75, b=75, t=75, pad=3),
+        legend_title=dict(text=""),
         colorscale=dict(
             diverging=div_colorscale,
             sequential=seq_colorscale,
-            sequentialminus=seq_colorscale[::-1]
+            sequentialminus=seq_colorscale[::-1],
         ),
         colorway=colorway,
-        paper_bgcolor='white',
-        plot_bgcolor='white'
+        paper_bgcolor="white",
+        plot_bgcolor="white",
     )
 )
 
 
 def _plot_plotly(
-        df: pd.DataFrame,
-        kind: str,
-        x_title: str = "",
-        y_title: str = "",
-        x_type: str = "-",
-        y_type: str = "-",
-        **kwargs
+    df: pd.DataFrame,
+    kind: str,
+    x_title: str = "",
+    y_title: str = "",
+    x_type: str = "-",
+    y_type: str = "-",
+    **kwargs,
 ):
     with pd.option_context("plotting.backend", "plotly"):
-        fig = df.plot(
-            kind=kind,
-            template=template,
-            **kwargs
-        )
+        fig = df.plot(kind=kind, template=template, **kwargs)
     fig.update_layout(
         xaxis_title=x_title,
         yaxis_title=y_title,
         xaxis_type=x_type,
-        yaxis_type=y_type
+        yaxis_type=y_type,
     )
     return fig
 
 
 def plot_acf(
-        df: pd.DataFrame,
-        y_col: str = None,
-        time_col: str = None,
-        partial: bool = False,
-        nlags: int = None,
-        title: str = None,
-        show_threshold: bool = True,
-        show: bool = True,
-        **kwargs
+    df: pd.DataFrame,
+    y_col: str = None,
+    time_col: str = None,
+    partial: bool = False,
+    nlags: int = None,
+    title: str = None,
+    show_threshold: bool = True,
+    show: bool = True,
+    **kwargs,
 ):
     """
     Interactive barplot of the autocorrelation function of a time series up to a certain lag
@@ -142,10 +127,7 @@ def plot_acf(
         c_upper = None
 
     acf_df = pd.DataFrame(
-        {
-            "lag": linspace(1, nlags, nlags),
-            "acf": acf_values
-        }
+        {"lag": linspace(1, nlags, nlags), "acf": acf_values}
     )
 
     def_title = "PACF" if partial else "ACF"
@@ -158,29 +140,29 @@ def plot_acf(
         error_y=c_upper,
         error_y_minus=c_lower,
         x_title="Lag",
-        y_title="Value"
+        y_title="Value",
     )
 
     if show_threshold:
         threshold = 2 / np.sqrt(len(acf_values))
         fig.add_trace(
             go.Scatter(
-                mode='lines',
+                mode="lines",
                 x=acf_df["lag"],
                 y=[threshold] * len(acf_values),
-                line=dict(color='Red', dash='dash'),
+                line=dict(color="Red", dash="dash"),
                 showlegend=False,
-                hoverinfo='skip'
+                hoverinfo="skip",
             )
         )
         fig.add_trace(
             go.Scatter(
-                mode='lines',
+                mode="lines",
                 x=acf_df["lag"],
-                y=[- threshold] * len(acf_values),
-                line=dict(color='Red', dash='dash'),
+                y=[-threshold] * len(acf_values),
+                line=dict(color="Red", dash="dash"),
                 showlegend=False,
-                hoverinfo='skip'
+                hoverinfo="skip",
             )
         )
     if show:
@@ -190,17 +172,17 @@ def plot_acf(
 
 
 def plot_psd(
-        df: pd.DataFrame,
-        y_col: str = None,
-        time_col: str = None,
-        nfft: int = None,
-        fs: int = 1,
-        min_period: int = 0,
-        max_period: int = np.inf,
-        plot_time: bool = False,
-        title: str = None,
-        show: bool = True,
-        **kwargs
+    df: pd.DataFrame,
+    y_col: str = None,
+    time_col: str = None,
+    nfft: int = None,
+    fs: int = 1,
+    min_period: int = 0,
+    max_period: int = np.inf,
+    plot_time: bool = False,
+    title: str = None,
+    show: bool = True,
+    **kwargs,
 ):
     """
     Interactive histogram of the spectral density of a time series
@@ -227,10 +209,14 @@ def plot_psd(
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df = plot_df.filter(items=[y_col])
 
-    f, spectral_density = periodogram(plot_df[y_col], fs=fs, nfft=nfft, **kwargs)
+    f, spectral_density = periodogram(
+        plot_df[y_col], fs=fs, nfft=nfft, **kwargs
+    )
     spectral_df = pd.DataFrame({"f": f, "spectral_density": spectral_density})
     spectral_df["t"] = 1 / spectral_df.f
-    spectral_df = spectral_df[(spectral_df.t < max_period) & (spectral_df.t > min_period)]
+    spectral_df = spectral_df[
+        (spectral_df.t < max_period) & (spectral_df.t > min_period)
+    ]
     def_title = "PSD"
     fig = _plot_plotly(
         spectral_df,
@@ -248,14 +234,14 @@ def plot_psd(
 
 
 def plot_ts_analysis(
-        df: pd.DataFrame,
-        y_col: str = None,
-        time_col: str = None,
-        nfft: int = 1024,
-        nlags: int = None,
-        alpha: float = 0.1,
-        show: bool= True,
-        title: str = None
+    df: pd.DataFrame,
+    y_col: str = None,
+    time_col: str = None,
+    nfft: int = 1024,
+    nlags: int = None,
+    alpha: float = 0.1,
+    show: bool = True,
+    title: str = None,
 ):
     """
     Comprehensive plotly plot showing: line plot of time series, spectral density, ACF and PACF.
@@ -287,7 +273,7 @@ def plot_ts_analysis(
     fig.update_layout(
         template=template,
         showlegend=False,
-        title=title if title else def_title
+        title=title if title else def_title,
     )
     fig.update_xaxes(title_text="Frequency", row=1, col=1)
     fig.update_yaxes(title_text="Density", row=1, col=1)
@@ -301,12 +287,7 @@ def plot_ts_analysis(
     f = f[1:]
     t = 1 / f
     pxx = pxx[1:]
-    periodogram_df = pd.DataFrame(
-        dict(
-            freq=f,
-            density=pxx
-        )
-    )
+    periodogram_df = pd.DataFrame(dict(freq=f, density=pxx))
 
     periodogram_trace = _plot_plotly(
         periodogram_df,
@@ -319,26 +300,16 @@ def plot_ts_analysis(
     acf_traces = plot_acf(plot_df, nlags=nlags, alpha=alpha, show=False).data
 
     # --- PACF ---
-    pacf_traces = plot_acf(plot_df, nlags=nlags, partial=True, alpha=alpha, show=False).data
+    pacf_traces = plot_acf(
+        plot_df, nlags=nlags, partial=True, alpha=alpha, show=False
+    ).data
 
-    fig.add_trace(
-        periodogram_trace,
-        row=1,
-        col=1
-    )
+    fig.add_trace(periodogram_trace, row=1, col=1)
     for trace in acf_traces:
-        fig.add_trace(
-            trace,
-            row=2,
-            col=1
-        )
+        fig.add_trace(trace, row=2, col=1)
 
     for trace in pacf_traces:
-        fig.add_trace(
-            trace,
-            row=2,
-            col=2
-        )
+        fig.add_trace(trace, row=2, col=2)
 
     if show:
         fig.show()
@@ -347,12 +318,12 @@ def plot_ts_analysis(
 
 
 def plot_distribution(
-        df: pd.DataFrame,
-        y_col: str = None,
-        time_col: str = None,
-        bins: int = None,
-        title: str = "",
-        show: bool = True
+    df: pd.DataFrame,
+    y_col: str = None,
+    time_col: str = None,
+    bins: int = None,
+    title: str = "",
+    show: bool = True,
 ):
     """
     Plotly histogram of a time series. Useful to assess marginal distribution shape.
@@ -379,7 +350,7 @@ def plot_distribution(
         nbins=bins,
         title=title,
         x_title="Value",
-        y_title="Frequency"
+        y_title="Frequency",
     )
     fig.update_layout(showlegend=False)
 
@@ -390,21 +361,21 @@ def plot_distribution(
 
 
 def plot_gof(
-        df: pd.DataFrame,
-        y_col: str,
-        y_hat_col: str,
-        time_col: str = None,
-        lags: int = None,
-        alpha: float = 0.1,
-        title: str = "Goodness of Fit",
-        subplot_titles: Tuple[str, str, str, str, str] = (
-                "Actual vs Predicted Series",
-                "Actual vs Predicted Scatter",
-                "Residuals",
-                "Residuals ACF",
-                "Residuals PACF"
-        ),
-        show: bool = True
+    df: pd.DataFrame,
+    y_col: str,
+    y_hat_col: str,
+    time_col: str = None,
+    lags: int = None,
+    alpha: float = 0.1,
+    title: str = "Goodness of Fit",
+    subplot_titles: Tuple[str, str, str, str, str] = (
+        "Actual vs Predicted Series",
+        "Actual vs Predicted Scatter",
+        "Residuals",
+        "Residuals ACF",
+        "Residuals PACF",
+    ),
+    show: bool = True,
 ):
     """
     Shows an interactive plot of goodness of fit visualizations. In order: Actual Series vs Predicted Series,
@@ -434,22 +405,12 @@ def plot_gof(
         rows=3,
         cols=2,
         subplot_titles=subplot_titles,
-        specs=[[{}, {"rowspan": 2}],
-               [{}, None],
-               [{}, {}]],
+        specs=[[{}, {"rowspan": 2}], [{}, None], [{}, {}]],
     )
-    fig.update_layout(
-        template=template,
-        showlegend=False,
-        title=title
-    )
+    fig.update_layout(template=template, showlegend=False, title=title)
     ts_traces = plot_ts(plot_df, y_cols=[y_col, y_hat_col], show=False).data
     for trace in ts_traces:
-        fig.add_trace(
-            trace,
-            row=1,
-            col=1
-        )
+        fig.add_trace(trace, row=1, col=1)
 
     res_trace = plot_ts(plot_df, y_cols=["Resid"], show=False).data[0]
     res_trace["line"]["color"] = colorway[2]
@@ -459,7 +420,9 @@ def plot_gof(
         col=1,
     )
 
-    scatter_traces = plot_scatter_fit(plot_df, y_col, y_hat_col, fit=True, show=False).data
+    scatter_traces = plot_scatter_fit(
+        plot_df, y_col, y_hat_col, fit=True, show=False
+    ).data
     for trace in scatter_traces:
         fig.add_trace(
             trace,
@@ -470,7 +433,9 @@ def plot_gof(
     if lags is None:
         lags = int(len(plot_df["Resid"].dropna()) / 2 - 1)
 
-    resid_acf_traces = plot_acf(plot_df.dropna(), y_col="Resid", nlags=lags, alpha=alpha, show=False).data
+    resid_acf_traces = plot_acf(
+        plot_df.dropna(), y_col="Resid", nlags=lags, alpha=alpha, show=False
+    ).data
     for trace in resid_acf_traces:
         fig.add_trace(
             trace,
@@ -478,8 +443,14 @@ def plot_gof(
             col=1,
         )
 
-    resid_pacf_traces = plot_acf(plot_df.dropna(), y_col="Resid", partial=True, nlags=lags, alpha=alpha,
-                                 show=False).data
+    resid_pacf_traces = plot_acf(
+        plot_df.dropna(),
+        y_col="Resid",
+        partial=True,
+        nlags=lags,
+        alpha=alpha,
+        show=False,
+    ).data
     for trace in resid_pacf_traces:
         fig.add_trace(
             trace,
@@ -505,15 +476,15 @@ def plot_gof(
 
 
 def plot_ts(
-        df: pd.DataFrame,
-        y_cols: List[str] = None,
-        time_col: str = None,
-        title: str = None,
-        tf: Union[str, Callable[[Iterable], Iterable]] = None,
-        tf_args: Tuple = (),
-        tf_kwargs: dict = None,
-        keep_original: bool = True,
-        show: bool = True
+    df: pd.DataFrame,
+    y_cols: List[str] = None,
+    time_col: str = None,
+    title: str = None,
+    tf: Union[str, Callable[[Iterable], Iterable]] = None,
+    tf_args: Tuple = (),
+    tf_kwargs: dict = None,
+    keep_original: bool = True,
+    show: bool = True,
 ):
     if tf_kwargs is None:
         tf_kwargs = {}
@@ -523,16 +494,26 @@ def plot_ts(
         plot_df = plot_df.filter(items=y_cols)
     if tf:
         transformation = global_vars.transform_dict.get(tf, tf)
-        transformed_df = plot_df.apply(transformation, args=tf_args, **tf_kwargs).add_prefix(f"{tf}(").add_suffix(")")
-        plot_df = pd.concat([plot_df, transformed_df], axis=1) if keep_original else transformed_df
+        transformed_df = (
+            plot_df.apply(transformation, args=tf_args, **tf_kwargs)
+            .add_prefix(f"{tf}(")
+            .add_suffix(")")
+        )
+        plot_df = (
+            pd.concat([plot_df, transformed_df], axis=1)
+            if keep_original
+            else transformed_df
+        )
 
-    def_title = "Time series (" + ", ".join(y_cols) + ")" if y_cols else "Time series"
+    def_title = (
+        "Time series (" + ", ".join(y_cols) + ")" if y_cols else "Time series"
+    )
     fig = _plot_plotly(
         plot_df,
         kind="line",
         title=title if title else def_title,
         x_title="Time",
-        y_title="Value"
+        y_title="Value",
     )
     fig.update_layout(legend_title_text="")
     if show:
@@ -542,13 +523,17 @@ def plot_ts(
 
 
 def plot_seasonal_ts(
-        df: pd.DataFrame,
-        period: Union[str, Tuple[Callable[[pd.DatetimeIndex], Any]], Callable[[pd.DatetimeIndex], Any]],
-        y_col: str = None,
-        time_col: str = None,
-        title: str = None,
-        subplots: bool = False,
-        show: bool = True
+    df: pd.DataFrame,
+    period: Union[
+        str,
+        Tuple[Callable[[pd.DatetimeIndex], Any]],
+        Callable[[pd.DatetimeIndex], Any],
+    ],
+    y_col: str = None,
+    time_col: str = None,
+    title: str = None,
+    subplots: bool = False,
+    show: bool = True,
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -556,18 +541,26 @@ def plot_seasonal_ts(
     season = period if isinstance(period, str) else "season"
 
     try:
-        plot_df[season] = global_vars.valid_seasons["grouping"].get(period, period[0])(plot_df.index)
-        plot_df.index = global_vars.valid_seasons["granularity"].get(period, period[1])(plot_df.index)
+        plot_df[season] = global_vars.valid_seasons["grouping"].get(
+            period, period[0]
+        )(plot_df.index)
+        plot_df.index = global_vars.valid_seasons["granularity"].get(
+            period, period[1]
+        )(plot_df.index)
     except TypeError:
-        print("'Period' param must be either a valid string ('minute', 'hour', 'day', 'week', 'month', 'quarter', "
-              "'year') or a custom function computing season from df.index.")
+        print(
+            "'Period' param must be either a valid string ('minute', 'hour', 'day', 'week', 'month', 'quarter', "
+            "'year') or a custom function computing season from df.index."
+        )
         return
 
     try:
         plot_df = plot_df.pivot(columns=season, values=y_col)
     except ValueError:
-        print("The selected seasonality is not suited for this dataframe due to its time span and/or its granularity."
-              " You can try with a custom one or adjust your dataframe.")
+        print(
+            "The selected seasonality is not suited for this dataframe due to its time span and/or its granularity."
+            " You can try with a custom one or adjust your dataframe."
+        )
         return
 
     def_title = f"Time series by {season}"
@@ -579,13 +572,17 @@ def plot_seasonal_ts(
             facet_row=season if subplots else None,
             title=title if title else def_title,
             x_title="Time",
-            y_title="Value"
+            y_title="Value",
         )
-        apply_grad_color_to_traces(fig, seq_colorscale_bounds[0], seq_colorscale_bounds[1])
+        apply_grad_color_to_traces(
+            fig, seq_colorscale_bounds[0], seq_colorscale_bounds[1]
+        )
 
     except ValueError as e:
         print(e)
-        print("The selected seasonality cannot be displayed in subplots (too many traces). Try setting subplots=False.")
+        print(
+            "The selected seasonality cannot be displayed in subplots (too many traces). Try setting subplots=False."
+        )
         return
 
     fig.update_layout(legend_title_text="")
@@ -596,14 +593,14 @@ def plot_seasonal_ts(
 
 
 def plot_decomposed_ts(
-        df: pd.DataFrame,
-        method: str,
-        y_col: str = None,
-        time_col: str = None,
-        title: str = None,
-        subplots: bool = True,
-        show: bool = True,
-        **decomp_kwargs
+    df: pd.DataFrame,
+    method: str,
+    y_col: str = None,
+    time_col: str = None,
+    title: str = None,
+    subplots: bool = True,
+    show: bool = True,
+    **decomp_kwargs,
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -625,15 +622,15 @@ def plot_decomposed_ts(
                 decomposed_df.iloc[:, i] *= decomposed_df.iloc[:, i - 1]
             else:
                 decomposed_df.iloc[:, i] += decomposed_df.iloc[:, i - 1]
-        decomposed_df.columns = [*decomposed_df.columns[:-1], 'Observed']
+        decomposed_df.columns = [*decomposed_df.columns[:-1], "Observed"]
     def_title = f"{method} decomposition"
     fig = _plot_plotly(
         decomposed_df,
         kind="line",
-        facet_row='variable' if subplots else None,
+        facet_row="variable" if subplots else None,
         title=title if title else def_title,
         x_title="Time",
-        y_title="Value"
+        y_title="Value",
     )
     fig.update_layout(legend_title_text="")
     if show:
@@ -643,14 +640,14 @@ def plot_decomposed_ts(
 
 
 def plot_forecast(
-        df: pd.DataFrame,
-        y_col: str,
-        fc_cols: List[str],
-        lower_col: str = None,
-        upper_col: str = None,
-        time_col: str = None,
-        title: str = None,
-        show: bool = True
+    df: pd.DataFrame,
+    y_col: str,
+    fc_cols: List[str],
+    lower_col: str = None,
+    upper_col: str = None,
+    time_col: str = None,
+    title: str = None,
+    show: bool = True,
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -662,37 +659,37 @@ def plot_forecast(
         kind="line",
         title=title if title else def_title,
         x_title="Time",
-        y_title="Value"
+        y_title="Value",
     )
     if upper_col:
         fig.add_trace(
             go.Scatter(
-                name='Upper Bound',
+                name="Upper Bound",
                 x=plot_df.index,
                 y=plot_df[upper_col],
-                mode='lines',
+                mode="lines",
                 marker=dict(color="#444"),
                 line=dict(width=0),
-                showlegend=False
+                showlegend=False,
             ),
             row=1,
-            col=1
+            col=1,
         )
     if lower_col:
         fig.add_trace(
             go.Scatter(
-                name='Lower Bound',
+                name="Lower Bound",
                 x=plot_df.index,
                 y=plot_df[lower_col],
                 marker=dict(color="#444"),
                 line=dict(width=0),
-                mode='lines',
-                fillcolor='rgba(68, 68, 68, 0.3)',
-                fill='tonexty',
-                showlegend=False
+                mode="lines",
+                fillcolor="rgba(68, 68, 68, 0.3)",
+                fill="tonexty",
+                showlegend=False,
             ),
             row=1,
-            col=1
+            col=1,
         )
     fig.update_layout(legend_title_text="")
     if show:
@@ -702,14 +699,14 @@ def plot_forecast(
 
 
 def plot_scatter_matrix(
-        df: pd.DataFrame,
-        var1: str,
-        var2: str = None,
-        lags1: List[int] = None,
-        lags2: List[int] = None,
-        time_col: str = None,
-        title: str = None,
-        show: bool = True
+    df: pd.DataFrame,
+    var1: str,
+    var2: str = None,
+    lags1: List[int] = None,
+    lags2: List[int] = None,
+    time_col: str = None,
+    title: str = None,
+    show: bool = True,
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -721,10 +718,14 @@ def plot_scatter_matrix(
         scatter_df = plot_df.filter(items=sel_vars)
         if lags1:
             for lag in lags1:
-                scatter_df[f"{var1} lag({lag})"] = plot_df[var1].shift(periods=lag, axis=0)
+                scatter_df[f"{var1} lag({lag})"] = plot_df[var1].shift(
+                    periods=lag, axis=0
+                )
         if lags2:
             for lag in lags2:
-                scatter_df[f"{var2} lag({lag})"] = plot_df[var2].shift(periods=lag, axis=0)
+                scatter_df[f"{var2} lag({lag})"] = plot_df[var2].shift(
+                    periods=lag, axis=0
+                )
 
         sel_vars_string = ", ".join(sel_vars) if var2 else var1
 
@@ -737,13 +738,13 @@ def plot_scatter_matrix(
             rows=n - 1,
             cols=n - 1,
             column_titles=feats_cols,
-            row_titles=feats_rows
+            row_titles=feats_rows,
         )
         def_title = f"Scatter matrix ({sel_vars_string}) with lags"
         fig.update_layout(
             template=template,
             showlegend=False,
-            title=title if title else def_title
+            title=title if title else def_title,
         )
 
         for x_var, y_var in product(feats_cols, feats_rows):
@@ -754,16 +755,9 @@ def plot_scatter_matrix(
                 j = feats_cols.index(x_var)
                 # --- Scatterplot ---
                 scatter_trace = plot_scatter_fit(
-                    scatter_df,
-                    x,
-                    y,
-                    show=False
+                    scatter_df, x, y, show=False
                 ).data[0]
-                fig.add_trace(
-                    scatter_trace,
-                    row=i + 1,
-                    col=j + 1
-                )
+                fig.add_trace(scatter_trace, row=i + 1, col=j + 1)
 
         if show:
             fig.show()
@@ -772,14 +766,14 @@ def plot_scatter_matrix(
 
 
 def plot_scatter_fit(
-        df: pd.DataFrame,
-        var1: str,
-        var2: str,
-        time_col: str = None,
-        title: str = None,
-        fit: Union[bool, Literal["summary"]] = False,
-        show: bool = True,
-        **kwargs
+    df: pd.DataFrame,
+    var1: str,
+    var2: str,
+    time_col: str = None,
+    title: str = None,
+    fit: Union[bool, Literal["summary"]] = False,
+    show: bool = True,
+    **kwargs,
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -797,7 +791,7 @@ def plot_scatter_fit(
         title=title if title else def_title,
         x_title=str(var1),
         y_title=str(var2),
-        **kwargs
+        **kwargs,
     )
     if show:
         fig.show()
@@ -814,16 +808,19 @@ def plot_scatter_fit(
             return fig
 
 
-def plot_inverse_arma_roots(
-        process: ArmaProcess,
-        show: bool = True
-):
+def plot_inverse_arma_roots(process: ArmaProcess, show: bool = True):
     copied_process = deepcopy(process)
     roots = copied_process.arroots
     inv_roots = 1 / roots
     re = [x.real for x in inv_roots]
     im = [x.imag for x in inv_roots]
-    inv_roots_df = pd.DataFrame({"Root": [str(round(r, 5))[1:-1] for r in inv_roots], "Re": re, "Im": im})
+    inv_roots_df = pd.DataFrame(
+        {
+            "Root": [str(round(r, 5))[1:-1] for r in inv_roots],
+            "Re": re,
+            "Im": im,
+        }
+    )
 
     layout = dict(
         yaxis=dict(
@@ -832,34 +829,27 @@ def plot_inverse_arma_roots(
             zeroline=True,
             dtick=0.25,
             gridwidth=0.1,
-            gridcolor='grey',
-            zerolinecolor='grey',
+            gridcolor="grey",
+            zerolinecolor="grey",
             zerolinewidth=2,
-            title="Im(1/root)"
+            title="Im(1/root)",
         ),
         xaxis=dict(
             showgrid=True,
             zeroline=True,
             dtick=0.25,
             gridwidth=0.1,
-            gridcolor='grey',
-            zerolinecolor='grey',
+            gridcolor="grey",
+            zerolinecolor="grey",
             zerolinewidth=2,
-            title="Re(1/root)"
-        )
+            title="Re(1/root)",
+        ),
     )
 
     fig = _plot_plotly(
-        inv_roots_df,
-        kind="scatter",
-        x=re,
-        y=im,
-        title=f"Inverse ARMA roots"
+        inv_roots_df, kind="scatter", x=re, y=im, title=f"Inverse ARMA roots"
     )
-    fig.add_shape(type="circle",
-                  xref="x", yref="y",
-                  x0=-1, y0=-1, x1=1, y1=1
-                  )
+    fig.add_shape(type="circle", xref="x", yref="y", x0=-1, y0=-1, x1=1, y1=1)
     fig.update_layout(layout)
 
     if show:
@@ -869,11 +859,11 @@ def plot_inverse_arma_roots(
 
 
 def plot_extended_scatter_matrix(
-        df: pd.DataFrame,
-        time_col: str = None,
-        y_cols: List[str] = None,
-        title: str = None,
-        show: bool = True
+    df: pd.DataFrame,
+    time_col: str = None,
+    y_cols: List[str] = None,
+    title: str = None,
+    show: bool = True,
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -883,16 +873,13 @@ def plot_extended_scatter_matrix(
     indices = list(range(len(feats)))
     n = len(feats)
     fig = make_subplots(
-        rows=n,
-        cols=n,
-        row_titles=list(feats),
-        column_titles=list(feats)
+        rows=n, cols=n, row_titles=list(feats), column_titles=list(feats)
     )
     def_title = "Scatter Matrix, extended"
     fig.update_layout(
         template=template,
         showlegend=False,
-        title=title if title else def_title
+        title=title if title else def_title,
     )
 
     for i, j in product(indices, indices):
@@ -900,12 +887,10 @@ def plot_extended_scatter_matrix(
         y = plot_df[feats[j]]
         if i > j:
             # --- Scatterplot ---
-            scatter_trace = plot_scatter_fit(plot_df, feats[i], feats[j], show=False).data[0]
-            fig.add_trace(
-                scatter_trace,
-                row=i + 1,
-                col=j + 1
-            )
+            scatter_trace = plot_scatter_fit(
+                plot_df, feats[i], feats[j], show=False
+            ).data[0]
+            fig.add_trace(scatter_trace, row=i + 1, col=j + 1)
         elif i < j:
             # --- Correlation coefficient ---
             fig.add_trace(
@@ -915,28 +900,30 @@ def plot_extended_scatter_matrix(
                     mode="text",
                     text=f"Corr: {round(pearsonr(x, y)[0], 2)}",
                     textposition="middle center",
-                    hoverinfo="skip"
+                    hoverinfo="skip",
                 ),
                 row=i + 1,
-                col=j + 1
+                col=j + 1,
             )
             fig.update_xaxes(
                 showgrid=False,
                 visible=False,
                 zeroline=False,
                 row=i + 1,
-                col=j + 1
+                col=j + 1,
             )
             fig.update_yaxes(
                 showgrid=False,
                 visible=False,
                 zeroline=False,
                 row=i + 1,
-                col=j + 1
+                col=j + 1,
             )
         else:
             # --- Distribution ---
-            trace = plot_distribution(plot_df, y_col=feats[i], show=False).data[0]
+            trace = plot_distribution(
+                plot_df, y_col=feats[i], show=False
+            ).data[0]
             fig.add_trace(trace, row=i + 1, col=j + 1)
 
     if show:
@@ -946,12 +933,12 @@ def plot_extended_scatter_matrix(
 
 
 def plot_ts_overview(
-        df: pd.DataFrame,
-        y_col: str = None,
-        nlags: int = None,
-        alpha: float = 0.1,
-        show: bool = True,
-        title: str = None
+    df: pd.DataFrame,
+    y_col: str = None,
+    nlags: int = None,
+    alpha: float = 0.1,
+    show: bool = True,
+    title: str = None,
 ):
     plot_df = df.copy()
     y_col = y_col if y_col else plot_df.columns[0]
@@ -970,7 +957,7 @@ def plot_ts_overview(
     fig.update_layout(
         template=template,
         showlegend=False,
-        title=title if title else def_title
+        title=title if title else def_title,
     )
     fig.update_xaxes(title_text="Time", row=1, col=1)
     fig.update_yaxes(title_text="Value", row=1, col=1)
@@ -983,28 +970,18 @@ def plot_ts_overview(
     ts_trace = plot_ts(plot_df, y_cols=[y_col], show=False).data[0]
 
     # --- ACF ---
-    acf_traces = plot_acf(plot_df, y_col=y_col, nlags=nlags, alpha=alpha, show=False).data
+    acf_traces = plot_acf(
+        plot_df, y_col=y_col, nlags=nlags, alpha=alpha, show=False
+    ).data
 
     # --- Distribution ---
     dist_trace = plot_distribution(plot_df, y_col=y_col, show=False).data[0]
 
-    fig.add_trace(
-        ts_trace,
-        row=1,
-        col=1
-    )
+    fig.add_trace(ts_trace, row=1, col=1)
     for trace in acf_traces:
-        fig.add_trace(
-            trace,
-            row=2,
-            col=1
-        )
+        fig.add_trace(trace, row=2, col=1)
 
-    fig.add_trace(
-        dist_trace,
-        row=2,
-        col=2
-    )
+    fig.add_trace(dist_trace, row=2, col=2)
 
     if show:
         fig.show()

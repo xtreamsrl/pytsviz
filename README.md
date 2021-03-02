@@ -25,6 +25,6 @@ pre-commit install
 
 Then, you're good to go.
 
-You're free to submit your pull requests. Just make sure they follow [conventional commit rules](https://www.conventionalcommits.org/en/v1.0.0/#specification). This can be enforced by tthe [*commitizen*](https://commitizen-tools.github.io/commitizen/) tool, which is also included among the package dependencies.
+You're free to submit your pull requests. Just make sure they follow [conventional commit rules](https://www.conventionalcommits.org/en/v1.0.0/#specification). This can be enforced by the [*commitizen*](https://commitizen-tools.github.io/commitizen/) tool, which is also included among the package dependencies.
 
 Please also make sure that function documntation is consistent. We are currently using [Sphinx docstrings](https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html).

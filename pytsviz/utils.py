@@ -46,7 +46,7 @@ def yeojohnson(x):
 
 
 def moving_average(x, w):
-    return np.convolve(x, np.ones(w), 'same') / w
+    return np.convolve(x, np.ones(w), "same") / w
 
 
 def set_time_index(df, time_col):
@@ -67,7 +67,7 @@ def make_granular_colorscale(col1, col2, n):
 
 
 def apply_grad_color_to_traces(fig, col1, col2):
-    n_traces = len(fig['data'])
+    n_traces = len(fig["data"])
     custom_colorscale = make_granular_colorscale(col1, col2, n_traces)
     for i in range(n_traces):
-        fig['data'][i]['line']['color'] = custom_colorscale[i]
+        fig["data"][i]["line"]["color"] = custom_colorscale[i]
