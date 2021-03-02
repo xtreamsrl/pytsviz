@@ -1,6 +1,7 @@
 """
 The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (partial) correlograms, periodograms, line plots, ...
 """
+from copy import deepcopy
 from itertools import product
 from typing import List, Callable, Iterable, Tuple, Any, Union, Literal
 import numpy as np
@@ -117,7 +118,7 @@ def plot_acf(
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
-    plot_df.filter(y_col)
+    plot_df = plot_df.filter(items=[y_col])
 
     if nlags is None:
         nlags = int(len(plot_df) / 2 - 1)
@@ -198,6 +199,7 @@ def plot_psd(
         max_period=np.inf,
         plot_time=False,
         title=None,
+        show=True,
         **kwargs
 ):
     """
@@ -223,14 +225,14 @@ def plot_psd(
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
-    plot_df.filter(y_col)
+    plot_df = plot_df.filter(items=[y_col])
 
     f, spectral_density = periodogram(plot_df[y_col], fs=fs, nfft=nfft, **kwargs)
     spectral_df = pd.DataFrame({"f": f, "spectral_density": spectral_density})
     spectral_df["t"] = 1 / spectral_df.f
     spectral_df = spectral_df[(spectral_df.t < max_period) & (spectral_df.t > min_period)]
     def_title = "PSD"
-    return _plot_plotly(
+    fig = _plot_plotly(
         spectral_df,
         x="t" if plot_time else "f",
         y="spectral_density",
@@ -239,6 +241,10 @@ def plot_psd(
         y_title="Density",
         title=title if title else def_title,
     )
+    if show:
+        fig.show()
+    else:
+        return fig
 
 
 def plot_ts_analysis(
@@ -266,7 +272,7 @@ def plot_ts_analysis(
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
-    plot_df.filter(y_col)
+    plot_df = plot_df.filter(items=[y_col])
 
     if nlags is None:
         nlags = int(len(plot_df) / 2 - 1)
@@ -365,10 +371,9 @@ def plot_distribution(
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
-    plot_df.filter(y_col)
-
+    distr_df = plot_df.filter(items=[y_col])
     fig = _plot_plotly(
-        plot_df,
+        distr_df,
         kind="histogram",
         histnorm="probability",
         nbins=bins,
@@ -592,6 +597,7 @@ def plot_seasonal_ts(
 def plot_decomposed_ts(
         df: pd.DataFrame,
         method: str,
+        y_col: str = None,
         time_col: str = None,
         title: str = None,
         subplots: bool = True,
@@ -600,6 +606,9 @@ def plot_decomposed_ts(
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
+    y_col = y_col if y_col else plot_df.columns[0]
+    plot_df = plot_df.filter(items=[y_col])
+
     decomp_model = global_vars.decomp_methods[method]
     decomp_func = list(decomp_model.keys())[0]
     kwargs = decomp_model[decomp_func]
@@ -608,17 +617,17 @@ def plot_decomposed_ts(
     if decomp_func is STL:
         res = res.fit()
     components = get_components(res)
-    plot_df = pd.DataFrame(data=components)
+    decomposed_df = pd.DataFrame(data=components)
     if not subplots:
-        for i in range(1, len(plot_df.columns)):
+        for i in range(1, len(decomposed_df.columns)):
             if kwargs.get("model") == "multiplicative":
-                plot_df.iloc[:, i] *= plot_df.iloc[:, i - 1]
+                decomposed_df.iloc[:, i] *= decomposed_df.iloc[:, i - 1]
             else:
-                plot_df.iloc[:, i] += plot_df.iloc[:, i - 1]
-        plot_df.columns = [*plot_df.columns[:-1], 'Observed']
+                decomposed_df.iloc[:, i] += decomposed_df.iloc[:, i - 1]
+        decomposed_df.columns = [*decomposed_df.columns[:-1], 'Observed']
     def_title = f"{method} decomposition"
     fig = _plot_plotly(
-        plot_df,
+        decomposed_df,
         kind="line",
         facet_row='variable' if subplots else None,
         title=title if title else def_title,
@@ -808,7 +817,8 @@ def plot_inverse_arma_roots(
         process: ArmaProcess,
         show=True
 ):
-    roots = process.arroots
+    copied_process = deepcopy(process)
+    roots = copied_process.arroots
     inv_roots = 1 / roots
     re = [x.real for x in inv_roots]
     im = [x.imag for x in inv_roots]
@@ -861,7 +871,8 @@ def plot_extended_scatter_matrix(
         df,
         time_col: str = None,
         y_cols: List[str] = None,
-        title: str = None
+        title: str = None,
+        show=True
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -924,9 +935,13 @@ def plot_extended_scatter_matrix(
             )
         else:
             # --- Distribution ---
-            trace = plot_distribution(plot_df, feats[i], show=False).data[0]
+            trace = plot_distribution(plot_df, y_col=feats[i], show=False).data[0]
             fig.add_trace(trace, row=i + 1, col=j + 1)
-    fig.show()
+
+    if show:
+        fig.show()
+    else:
+        return fig
 
 
 def plot_ts_overview(
@@ -939,7 +954,7 @@ def plot_ts_overview(
 ):
     plot_df = df.copy()
     y_col = y_col if y_col else plot_df.columns[0]
-    plot_df.filter(y_col)
+    plot_df = plot_df.filter(items=[y_col])
 
     if nlags is None:
         nlags = int(len(plot_df) / 2 - 1)
