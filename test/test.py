@@ -34,21 +34,24 @@ def test_args_are_unchanged(
 
 testing_dict = {
     plotly_acf: {
-            "series": df["LTC"],
-            "nlags": 50
+            "df": df,
+            "y_col": "LTC"
     },
     plotly_pacf: {
-            "series": df["LTC"],
-            "nlags": 50
+            "df": df,
+            "y_col": "LTC"
     },
     plotly_psd: {
-            "series": df["LTC"]
+            "df": df,
+            "y_col": "LTC"
     },
     plotly_tsdisplay: {
-            "series": df["LTC"]
+            "df": df,
+            "y_col": "LTC"
     },
     plot_distribution_histogram: {
-            "series": df["LTC"]
+            "df": df,
+            "y_col": "LTC"
     },
     plot_gof: {
             "df": df,

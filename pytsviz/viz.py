@@ -94,8 +94,10 @@ def _plot_plotly(
 
 
 def plotly_acf(
-        series,
-        nlags,
+        df,
+        y_col: str = None,
+        time_col: str = None,
+        nlags: int = None,
         title=None,
         show_threshold=True,
         show=True,
@@ -113,8 +115,16 @@ def plotly_acf(
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
+    y_col = y_col if y_col else plot_df.columns[0]
+    plot_df.filter(y_col)
+
+    if nlags is None:
+        nlags = int(len(plot_df) / 2 - 1)
+
     if kwargs.get("alpha"):
-        acf_values, conf_int = acf(series, nlags=nlags, fft=False, **kwargs)
+        acf_values, conf_int = acf(df, nlags=nlags, fft=False, **kwargs)
         acf_values = acf_values[1:]
 
         conf_int = [np.array(x) for x in zip(*conf_int)]
@@ -123,7 +133,7 @@ def plotly_acf(
         c_upper = conf_int[1][1:] - acf_values
 
     else:
-        acf_values = acf(series, nlags=nlags, fft=False, **kwargs)
+        acf_values = acf(plot_df, nlags=nlags, fft=False, **kwargs)
         acf_values = acf_values[1:]
 
         c_lower = None
@@ -261,7 +271,9 @@ def plotly_pacf(
 
 
 def plotly_psd(
-        series,
+        df,
+        y_col: str = None,
+        time_col: str = None,
         nfft=None,
         fs=1,
         min_period=0,
@@ -290,8 +302,12 @@ def plotly_psd(
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
+    y_col = y_col if y_col else plot_df.columns[0]
+    plot_df.filter(y_col)
 
-    f, spectral_density = periodogram(series, fs=fs, nfft=nfft, **kwargs)
+    f, spectral_density = periodogram(plot_df, fs=fs, nfft=nfft, **kwargs)
     plt_df = pd.DataFrame({"f": f, "spectral_density": spectral_density})
     plt_df["t"] = 1 / plt_df.f
     plt_df = plt_df[(plt_df.t < max_period) & (plt_df.t > min_period)]
@@ -357,9 +373,11 @@ def tsdisplay(
 
 
 def plotly_tsdisplay(
-        series,
+        df,
+        y_col: str = None,
+        time_col: str = None,
         nfft=1024,
-        lags=None,
+        nlags=None,
         alpha=0.1,
         show=True,
         title=None
@@ -371,13 +389,18 @@ def plotly_tsdisplay(
     :type series: `array-like`
     :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
     :type nfft: `int`, optional, default *None*
-    :param lags: Number of lags to compute ACF and PACF
-    :type lags: `int`, default 192
+    :param nlags: Number of lags to compute ACF and PACF
+    :type nlags: `int`, default 192
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
-    if lags is None:
-        lags = int(len(series) / 2 - 1)
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
+    y_col = y_col if y_col else plot_df.columns[0]
+    plot_df.filter(y_col)
+
+    if nlags is None:
+        nlags = int(len(plot_df) / 2 - 1)
 
     fig = make_subplots(
         rows=2,
@@ -399,7 +422,7 @@ def plotly_tsdisplay(
     fig.update_yaxes(title_text="Value", row=2, col=2)
 
     # --- Periodogram ---
-    f, pxx = periodogram(series, nfft=nfft)
+    f, pxx = periodogram(plot_df, nfft=nfft)
     f = f[1:]
     t = 1 / f
     pxx = pxx[1:]
@@ -418,10 +441,10 @@ def plotly_tsdisplay(
     ).data[0]
 
     # --- ACF ---
-    acf_traces = plotly_acf(series, nlags=lags, alpha=alpha, show=False).data
+    acf_traces = plotly_acf(plot_df, nlags=nlags, alpha=alpha, show=False).data
 
     # --- PACF ---
-    pacf_traces = plotly_pacf(series, nlags=lags, alpha=alpha, show=False).data
+    pacf_traces = plotly_pacf(plot_df, nlags=nlags, alpha=alpha, show=False).data
 
     fig.add_trace(
         periodogram_trace,
@@ -448,7 +471,14 @@ def plotly_tsdisplay(
         return fig
 
 
-def plot_distribution_histogram(series, bins=None, title="", show=True):
+def plot_distribution_histogram(
+        df,
+        y_col: str = None,
+        time_col: str = None,
+        bins=None,
+        title="",
+        show=True
+):
     """
     Plotly histogram of a time series. Useful to assess marginal distribution shape.
 
@@ -463,9 +493,13 @@ def plot_distribution_histogram(series, bins=None, title="", show=True):
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
+    y_col = y_col if y_col else plot_df.columns[0]
+    plot_df.filter(y_col)
 
     fig = _plot_plotly(
-        series,
+        plot_df,
         kind="histogram",
         histnorm="probability",
         nbins=bins,
@@ -1027,14 +1061,19 @@ def composite_matrix_scatterplot(
 
 
 def composite_summary_plot(
-        series,
-        lags=None,
+        df,
+        y_col: str = None,
+        nlags=None,
         alpha=0.1,
         show=True,
         title=None
 ):
-    if lags is None:
-        lags = int(len(series) / 2 - 1)
+    plot_df = df.copy()
+    y_col = y_col if y_col else plot_df.columns[0]
+    plot_df.filter(y_col)
+
+    if nlags is None:
+        nlags = int(len(plot_df) / 2 - 1)
 
     fig = make_subplots(
         rows=2,
@@ -1056,13 +1095,13 @@ def composite_summary_plot(
     fig.update_yaxes(title_text="Frequency", row=2, col=2)
 
     # --- Time series ---
-    ts_trace = time_series_plot(series, show=False).data[0]
+    ts_trace = time_series_plot(plot_df, y_cols=[y_col], show=False).data[0]
 
     # --- ACF ---
-    acf_traces = plotly_acf(series, nlags=lags, alpha=alpha, show=False).data
+    acf_traces = plotly_acf(plot_df, y_col=y_col, nlags=nlags, alpha=alpha, show=False).data
 
     # --- Distribution ---
-    dist_trace = plot_distribution_histogram(series, show=False).data[0]
+    dist_trace = plot_distribution_histogram(plot_df, y_col=y_col, show=False).data[0]
 
     fig.add_trace(
         ts_trace,
