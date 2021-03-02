@@ -482,7 +482,7 @@ def plot_distribution_histogram(series, bins=None, title="", show=True):
 
 
 def plot_gof(
-        fc_df,
+        df,
         y_col: str,
         y_hat_col: str,
         time_col: str = None,
@@ -518,9 +518,9 @@ def plot_gof(
     :return: Tuple of plotly figures
     :rtype: `tuple` of :py:class:`plotly.graph_objects.Figure`. Length 2.
     """
-    df = fc_df.copy()
-    set_time_index(df, time_col)
-    df["Resid"] = df[y_col] - df[y_hat_col]
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
+    plot_df["Resid"] = plot_df[y_col] - plot_df[y_hat_col]
 
     fig = make_subplots(
         rows=3,
@@ -535,7 +535,7 @@ def plot_gof(
         showlegend=False,
         title=title
     )
-    ts_traces = time_series_plot(df, y_cols=[y_col, y_hat_col], show=False).data
+    ts_traces = time_series_plot(plot_df, y_cols=[y_col, y_hat_col], show=False).data
     for trace in ts_traces:
         fig.add_trace(
             trace,
@@ -543,7 +543,7 @@ def plot_gof(
             col=1
         )
 
-    res_trace = time_series_plot(df, y_cols=["Resid"], show=False).data[0]
+    res_trace = time_series_plot(plot_df, y_cols=["Resid"], show=False).data[0]
     res_trace["line"]["color"] = colorway[2]
     fig.add_trace(
         res_trace,
@@ -551,7 +551,7 @@ def plot_gof(
         col=1,
     )
 
-    scatter_traces = scatterplot(df, y_col, y_hat_col, fit=True, show=False).data
+    scatter_traces = scatterplot(plot_df, y_col, y_hat_col, fit=True, show=False).data
     for trace in scatter_traces:
         fig.add_trace(
             trace,
@@ -560,9 +560,9 @@ def plot_gof(
         )
 
     if lags is None:
-        lags = int(len(df["Resid"].dropna()) / 2 - 1)
+        lags = int(len(plot_df["Resid"].dropna()) / 2 - 1)
 
-    resid_acf_traces = plotly_acf(df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
+    resid_acf_traces = plotly_acf(plot_df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
     for trace in resid_acf_traces:
         fig.add_trace(
             trace,
@@ -570,7 +570,7 @@ def plot_gof(
             col=1,
         )
 
-    resid_pacf_traces = plotly_pacf(df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
+    resid_pacf_traces = plotly_pacf(plot_df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
     for trace in resid_pacf_traces:
         fig.add_trace(
             trace,
@@ -596,7 +596,7 @@ def plot_gof(
 
 
 def time_series_plot(
-        ts_df: pd.DataFrame,
+        df: pd.DataFrame,
         y_cols: List[str] = None,
         time_col: str = None,
         title: str = None,
@@ -608,18 +608,18 @@ def time_series_plot(
 ):
     if tf_kwargs is None:
         tf_kwargs = {}
-    df = ts_df.copy()
-    set_time_index(df, time_col)
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
     if y_cols:
-        df = df.filter(items=y_cols)
+        plot_df = plot_df.filter(items=y_cols)
     if tf:
         transformation = global_vars.transform_dict.get(tf, tf)
-        transformed_df = df.apply(transformation, args=tf_args, **tf_kwargs).add_prefix(f"{tf}(").add_suffix(")")
-        df = pd.concat([df, transformed_df], axis=1) if keep_original else transformed_df
+        transformed_df = plot_df.apply(transformation, args=tf_args, **tf_kwargs).add_prefix(f"{tf}(").add_suffix(")")
+        plot_df = pd.concat([plot_df, transformed_df], axis=1) if keep_original else transformed_df
 
     def_title = "Time series (" + ", ".join(y_cols) + ")" if y_cols else "Time series"
     fig = _plot_plotly(
-        df,
+        plot_df,
         kind="line",
         title=title if title else def_title,
         x_title="Time",
@@ -633,29 +633,29 @@ def time_series_plot(
 
 
 def seasonal_time_series_plot(
-        ts_df: pd.DataFrame,
+        df: pd.DataFrame,
         period: Union[str, Tuple[Callable[[pd.DatetimeIndex], Any]], Callable[[pd.DatetimeIndex], Any]],
-        ts_col: str = None,
+        y_col: str = None,
         time_col: str = None,
         title: str = None,
         subplots=False,
         show=True
 ):
-    df = ts_df.copy()
-    set_time_index(df, time_col)
-    ts_col = ts_col if ts_col else df.columns[0]
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
+    y_col = y_col if y_col else plot_df.columns[0]
     season = period if isinstance(period, str) else "season"
 
     try:
-        df[season] = global_vars.valid_seasons["grouping"].get(period, period[0])(df.index)
-        df.index = global_vars.valid_seasons["granularity"].get(period, period[1])(df.index)
+        plot_df[season] = global_vars.valid_seasons["grouping"].get(period, period[0])(plot_df.index)
+        plot_df.index = global_vars.valid_seasons["granularity"].get(period, period[1])(plot_df.index)
     except TypeError:
         print("'Period' param must be either a valid string ('minute', 'hour', 'day', 'week', 'month', 'quarter', "
               "'year') or a custom function computing season from df.index.")
         return
 
     try:
-        df = df.pivot(columns=season, values=ts_col)
+        plot_df = plot_df.pivot(columns=season, values=y_col)
     except ValueError:
         print("The selected seasonality is not suited for this dataframe due to its time span and/or its granularity."
               " You can try with a custom one or adjust your dataframe.")
@@ -665,7 +665,7 @@ def seasonal_time_series_plot(
 
     try:
         fig = _plot_plotly(
-            df,
+            plot_df,
             kind="line",
             facet_row=season if subplots else None,
             title=title if title else def_title,
@@ -687,7 +687,7 @@ def seasonal_time_series_plot(
 
 
 def decomposed_time_series_plot(
-        ts_df: pd.DataFrame,
+        df: pd.DataFrame,
         method: str,
         time_col: str = None,
         title: str = None,
@@ -695,27 +695,27 @@ def decomposed_time_series_plot(
         show=True,
         **decomp_kwargs
 ):
-    df = ts_df.copy()
-    set_time_index(df, time_col)
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
     decomp_model = global_vars.decomp_methods[method]
     decomp_func = list(decomp_model.keys())[0]
     kwargs = decomp_model[decomp_func]
     kwargs.update(decomp_kwargs)
-    res = decomp_func(df, **kwargs)
+    res = decomp_func(plot_df, **kwargs)
     if decomp_func is STL:
         res = res.fit()
     components = get_components(res)
-    df = pd.DataFrame(data=components)
+    plot_df = pd.DataFrame(data=components)
     if not subplots:
-        for i in range(1, len(df.columns)):
+        for i in range(1, len(plot_df.columns)):
             if kwargs.get("model") == "multiplicative":
-                df.iloc[:, i] *= df.iloc[:, i - 1]
+                plot_df.iloc[:, i] *= plot_df.iloc[:, i - 1]
             else:
-                df.iloc[:, i] += df.iloc[:, i - 1]
-        df.columns = [*df.columns[:-1], 'Observed']
+                plot_df.iloc[:, i] += plot_df.iloc[:, i - 1]
+        plot_df.columns = [*plot_df.columns[:-1], 'Observed']
     def_title = f"{method} decomposition"
     fig = _plot_plotly(
-        df,
+        plot_df,
         kind="line",
         facet_row='variable' if subplots else None,
         title=title if title else def_title,
@@ -730,8 +730,8 @@ def decomposed_time_series_plot(
 
 
 def forecast_plot(
-        fc_df: pd.DataFrame,
-        ts_col: str,
+        df: pd.DataFrame,
+        y_col: str,
         fc_cols: List[str],
         lower_col: str = None,
         upper_col: str = None,
@@ -739,11 +739,11 @@ def forecast_plot(
         title: str = None,
         show=True
 ):
-    df = fc_df.copy()
-    set_time_index(df, time_col)
-    line_df = df.filter(items=[ts_col] + fc_cols)
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
+    line_df = plot_df.filter(items=[y_col] + fc_cols)
 
-    def_title = f"Forecast ({ts_col})"
+    def_title = f"Forecast ({y_col})"
     fig = _plot_plotly(
         line_df,
         kind="line",
@@ -755,8 +755,8 @@ def forecast_plot(
         fig.add_trace(
             go.Scatter(
                 name='Upper Bound',
-                x=fc_df.index,
-                y=fc_df[upper_col],
+                x=plot_df.index,
+                y=plot_df[upper_col],
                 mode='lines',
                 marker=dict(color="#444"),
                 line=dict(width=0),
@@ -769,8 +769,8 @@ def forecast_plot(
         fig.add_trace(
             go.Scatter(
                 name='Lower Bound',
-                x=fc_df.index,
-                y=fc_df[lower_col],
+                x=plot_df.index,
+                y=plot_df[lower_col],
                 marker=dict(color="#444"),
                 line=dict(width=0),
                 mode='lines',
@@ -789,7 +789,7 @@ def forecast_plot(
 
 
 def vars_scatterplot(
-        feat_df,
+        df,
         var1: str,
         var2: str = None,
         lags1: List[int] = None,
@@ -798,20 +798,20 @@ def vars_scatterplot(
         title: str = None,
         show=True
 ):
-    df = feat_df.copy()
-    set_time_index(df, time_col)
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
     if var2 is None and lags1 is None:
         print("At least one between var2 and lags1 must be provided")
         return
     else:
         sel_vars = [var1, var2]
-        scatter_df = df.filter(items=sel_vars)  # if var2 is None else df.filter(items=[var1, var2])
+        scatter_df = plot_df.filter(items=sel_vars)
         if lags1:
             for lag in lags1:
-                scatter_df[f"{var1} lag({lag})"] = df[var1].shift(periods=lag, axis=0)
+                scatter_df[f"{var1} lag({lag})"] = plot_df[var1].shift(periods=lag, axis=0)
         if lags2:
             for lag in lags2:
-                scatter_df[f"{var2} lag({lag})"] = df[var2].shift(periods=lag, axis=0)
+                scatter_df[f"{var2} lag({lag})"] = plot_df[var2].shift(periods=lag, axis=0)
 
         sel_vars_string = ", ".join(sel_vars) if var2 else var1
 
@@ -859,7 +859,7 @@ def vars_scatterplot(
 
 
 def scatterplot(
-        feat_df,
+        df,
         var1: str,
         var2: str,
         time_col: str = None,
@@ -868,8 +868,8 @@ def scatterplot(
         show=True,
         **kwargs
 ):
-    df = feat_df.copy()
-    set_time_index(df, time_col)
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
     if fit is not False:
         fit_dict = {"trendline": "ols"}
         fit_dict.update(**kwargs)
@@ -877,7 +877,7 @@ def scatterplot(
 
     def_title = f"Scatter plot ({var1} vs {var2})"
     fig = _plot_plotly(
-        df,
+        plot_df,
         kind="scatter",
         x=var1,
         y=var2,
@@ -955,16 +955,16 @@ def inverse_arma_roots_plot(
 
 
 def composite_matrix_scatterplot(
-        feat_df,
+        df,
         time_col: str = None,
         y_cols: List[str] = None,
         title: str = None
 ):
-    df = feat_df.copy()
-    set_time_index(df, time_col)
+    plot_df = df.copy()
+    set_time_index(plot_df, time_col)
     if y_cols:
-        df = df.filter(items=y_cols)
-    feats = df.columns
+        plot_df = plot_df.filter(items=y_cols)
+    feats = plot_df.columns
     indices = list(range(len(feats)))
     n = len(feats)
     fig = make_subplots(
@@ -981,11 +981,11 @@ def composite_matrix_scatterplot(
     )
 
     for i, j in product(indices, indices):
-        x = df[feats[i]]
-        y = df[feats[j]]
+        x = plot_df[feats[i]]
+        y = plot_df[feats[j]]
         if i > j:
             # --- Scatterplot ---
-            scatter_trace = scatterplot(feat_df, feats[i], feats[j], show=False).data[0]
+            scatter_trace = scatterplot(plot_df, feats[i], feats[j], show=False).data[0]
             fig.add_trace(
                 scatter_trace,
                 row=i + 1,

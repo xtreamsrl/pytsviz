@@ -2,6 +2,8 @@ import os
 from copy import deepcopy
 from typing import Callable, Tuple
 import pandas as pd
+import numpy as np
+import statsmodels.api as sm
 
 from pytsviz.global_vars import root_path
 from pytsviz.viz import plotly_acf, plotly_pacf, plotly_psd, plotly_tsdisplay, plot_distribution_histogram, plot_gof, \
@@ -32,63 +34,66 @@ def test_args_are_unchanged(
 
 testing_dict = {
     plotly_acf: {
-        "args": (df["LTC"], 50),
-        "kwargs": {}
+            "series": df["LTC"],
+            "nlags": 50
     },
     plotly_pacf: {
-        "args": (df["LTC"], 50),
-        "kwargs": {}
+            "series": df["LTC"],
+            "nlags": 50
     },
     plotly_psd: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "series": df["LTC"]
     },
     plotly_tsdisplay: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "series": df["LTC"]
     },
     plot_distribution_histogram: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "series": df["LTC"]
     },
     plot_gof: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df,
+            "y_col": "LTC",
+            "y_hat_col": "LTC_fc"
     },
     time_series_plot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df,
+            "tf": "moving_average"
     },
     seasonal_time_series_plot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df,
+            "period": "quarter",
+            "y_col": "LTC"
     },
     decomposed_time_series_plot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df,
+            "method": "STL",
     },
     forecast_plot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df,
+            "y_col": "LTC",
+            "fc_cols": ["LTC_fc"],
+            "lower_col": "LTC_lb",
+            "upper_col": "LTC_ub"
     },
     vars_scatterplot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df,
+            "var1": "LTC",
+            "var2": "BTC",
+            "lags1": [5],
+            "lags2": [5]
     },
     scatterplot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df,
+            "var1": "LTC",
+            "var2": "BTC"
     },
     inverse_arma_roots_plot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "process": sm.tsa.ArmaProcess(np.r_[1, np.array([-.75, .25])],  np.r_[1, np.array([.65, .35])])
     },
     composite_matrix_scatterplot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "df": df
     },
     composite_summary_plot: {
-        "args": (series, nlags),
-        "kwargs": {}
+            "series": df["LTC"]
     }
 }
