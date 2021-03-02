@@ -6,9 +6,9 @@ import numpy as np
 import statsmodels.api as sm
 
 from pytsviz.global_vars import root_path
-from pytsviz.viz import plotly_acf, plotly_pacf, plotly_psd, plotly_tsdisplay, plot_distribution_histogram, plot_gof, \
-    time_series_plot, seasonal_time_series_plot, decomposed_time_series_plot, forecast_plot, vars_scatterplot, \
-    scatterplot, inverse_arma_roots_plot, composite_matrix_scatterplot, composite_summary_plot
+from pytsviz.viz import plot_acf, plotly_pacf, plot_psd, plot_ts_analysis, plot_distribution, plot_gof, \
+    plot_ts, plot_seasonal_ts, plot_decomposed_ts, plot_forecast, plot_scatter_matrix, \
+    plot_scatter_fit, plot_inverse_arma_roots, plot_extended_scatter_matrix, plot_ts_overview
 
 data_path = os.path.join(root_path, "data", "crypto.csv")
 
@@ -33,19 +33,19 @@ def test_args_are_unchanged(
 
 
 testing_dict = {
-    plotly_acf: {
+    plot_acf: {
             "df": df,
             "y_col": "LTC"
     },
-    plotly_psd: {
+    plot_psd: {
             "df": df,
             "y_col": "LTC"
     },
-    plotly_tsdisplay: {
+    plot_ts_analysis: {
             "df": df,
             "y_col": "LTC"
     },
-    plot_distribution_histogram: {
+    plot_distribution: {
             "df": df,
             "y_col": "LTC"
     },
@@ -54,45 +54,45 @@ testing_dict = {
             "y_col": "LTC",
             "y_hat_col": "LTC_fc"
     },
-    time_series_plot: {
+    plot_ts: {
             "df": df,
             "tf": "moving_average"
     },
-    seasonal_time_series_plot: {
+    plot_seasonal_ts: {
             "df": df,
             "period": "quarter",
             "y_col": "LTC"
     },
-    decomposed_time_series_plot: {
+    plot_decomposed_ts: {
             "df": df,
             "method": "STL",
     },
-    forecast_plot: {
+    plot_forecast: {
             "df": df,
             "y_col": "LTC",
             "fc_cols": ["LTC_fc"],
             "lower_col": "LTC_lb",
             "upper_col": "LTC_ub"
     },
-    vars_scatterplot: {
+    plot_scatter_matrix: {
             "df": df,
             "var1": "LTC",
             "var2": "BTC",
             "lags1": [5],
             "lags2": [5]
     },
-    scatterplot: {
+    plot_scatter_fit: {
             "df": df,
             "var1": "LTC",
             "var2": "BTC"
     },
-    inverse_arma_roots_plot: {
+    plot_inverse_arma_roots: {
             "process": sm.tsa.ArmaProcess(np.r_[1, np.array([-.75, .25])],  np.r_[1, np.array([.65, .35])])
     },
-    composite_matrix_scatterplot: {
+    plot_extended_scatter_matrix: {
             "df": df
     },
-    composite_summary_plot: {
+    plot_ts_overview: {
             "series": df["LTC"]
     }
 }

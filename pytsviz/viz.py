@@ -91,7 +91,7 @@ def _plot_plotly(
     return fig
 
 
-def plotly_acf(
+def plot_acf(
         df,
         y_col: str = None,
         time_col: str = None,
@@ -188,7 +188,7 @@ def plotly_acf(
         return fig
 
 
-def plotly_psd(
+def plot_psd(
         df,
         y_col: str = None,
         time_col: str = None,
@@ -241,7 +241,7 @@ def plotly_psd(
     )
 
 
-def plotly_tsdisplay(
+def plot_ts_analysis(
         df,
         y_col: str = None,
         time_col: str = None,
@@ -310,10 +310,10 @@ def plotly_tsdisplay(
     ).data[0]
 
     # --- ACF ---
-    acf_traces = plotly_acf(plot_df, nlags=nlags, alpha=alpha, show=False).data
+    acf_traces = plot_acf(plot_df, nlags=nlags, alpha=alpha, show=False).data
 
     # --- PACF ---
-    pacf_traces = plotly_acf(plot_df, nlags=nlags, partial=True, alpha=alpha, show=False).data
+    pacf_traces = plot_acf(plot_df, nlags=nlags, partial=True, alpha=alpha, show=False).data
 
     fig.add_trace(
         periodogram_trace,
@@ -340,7 +340,7 @@ def plotly_tsdisplay(
         return fig
 
 
-def plot_distribution_histogram(
+def plot_distribution(
         df,
         y_col: str = None,
         time_col: str = None,
@@ -438,7 +438,7 @@ def plot_gof(
         showlegend=False,
         title=title
     )
-    ts_traces = time_series_plot(plot_df, y_cols=[y_col, y_hat_col], show=False).data
+    ts_traces = plot_ts(plot_df, y_cols=[y_col, y_hat_col], show=False).data
     for trace in ts_traces:
         fig.add_trace(
             trace,
@@ -446,7 +446,7 @@ def plot_gof(
             col=1
         )
 
-    res_trace = time_series_plot(plot_df, y_cols=["Resid"], show=False).data[0]
+    res_trace = plot_ts(plot_df, y_cols=["Resid"], show=False).data[0]
     res_trace["line"]["color"] = colorway[2]
     fig.add_trace(
         res_trace,
@@ -454,7 +454,7 @@ def plot_gof(
         col=1,
     )
 
-    scatter_traces = scatterplot(plot_df, y_col, y_hat_col, fit=True, show=False).data
+    scatter_traces = plot_scatter_fit(plot_df, y_col, y_hat_col, fit=True, show=False).data
     for trace in scatter_traces:
         fig.add_trace(
             trace,
@@ -465,7 +465,7 @@ def plot_gof(
     if lags is None:
         lags = int(len(plot_df["Resid"].dropna()) / 2 - 1)
 
-    resid_acf_traces = plotly_acf(plot_df.dropna(), y_col="Resid", nlags=lags, alpha=alpha, show=False).data
+    resid_acf_traces = plot_acf(plot_df.dropna(), y_col="Resid", nlags=lags, alpha=alpha, show=False).data
     for trace in resid_acf_traces:
         fig.add_trace(
             trace,
@@ -473,7 +473,7 @@ def plot_gof(
             col=1,
         )
 
-    resid_pacf_traces = plotly_acf(plot_df.dropna(), y_col="Resid", partial=True, nlags=lags, alpha=alpha, show=False).data
+    resid_pacf_traces = plot_acf(plot_df.dropna(), y_col="Resid", partial=True, nlags=lags, alpha=alpha, show=False).data
     for trace in resid_pacf_traces:
         fig.add_trace(
             trace,
@@ -498,7 +498,7 @@ def plot_gof(
         return fig
 
 
-def time_series_plot(
+def plot_ts(
         df: pd.DataFrame,
         y_cols: List[str] = None,
         time_col: str = None,
@@ -535,7 +535,7 @@ def time_series_plot(
         return fig
 
 
-def seasonal_time_series_plot(
+def plot_seasonal_ts(
         df: pd.DataFrame,
         period: Union[str, Tuple[Callable[[pd.DatetimeIndex], Any]], Callable[[pd.DatetimeIndex], Any]],
         y_col: str = None,
@@ -589,7 +589,7 @@ def seasonal_time_series_plot(
         return fig
 
 
-def decomposed_time_series_plot(
+def plot_decomposed_ts(
         df: pd.DataFrame,
         method: str,
         time_col: str = None,
@@ -632,7 +632,7 @@ def decomposed_time_series_plot(
         return fig
 
 
-def forecast_plot(
+def plot_forecast(
         df: pd.DataFrame,
         y_col: str,
         fc_cols: List[str],
@@ -691,7 +691,7 @@ def forecast_plot(
         return fig
 
 
-def vars_scatterplot(
+def plot_scatter_matrix(
         df,
         var1: str,
         var2: str = None,
@@ -743,7 +743,7 @@ def vars_scatterplot(
                 i = feats_rows.index(y_var)
                 j = feats_cols.index(x_var)
                 # --- Scatterplot ---
-                scatter_trace = scatterplot(
+                scatter_trace = plot_scatter_fit(
                     scatter_df,
                     x,
                     y,
@@ -761,7 +761,7 @@ def vars_scatterplot(
             return fig
 
 
-def scatterplot(
+def plot_scatter_fit(
         df,
         var1: str,
         var2: str,
@@ -804,7 +804,7 @@ def scatterplot(
             return fig
 
 
-def inverse_arma_roots_plot(
+def plot_inverse_arma_roots(
         process: ArmaProcess,
         show=True
 ):
@@ -857,7 +857,7 @@ def inverse_arma_roots_plot(
         return fig
 
 
-def composite_matrix_scatterplot(
+def plot_extended_scatter_matrix(
         df,
         time_col: str = None,
         y_cols: List[str] = None,
@@ -888,7 +888,7 @@ def composite_matrix_scatterplot(
         y = plot_df[feats[j]]
         if i > j:
             # --- Scatterplot ---
-            scatter_trace = scatterplot(plot_df, feats[i], feats[j], show=False).data[0]
+            scatter_trace = plot_scatter_fit(plot_df, feats[i], feats[j], show=False).data[0]
             fig.add_trace(
                 scatter_trace,
                 row=i + 1,
@@ -924,12 +924,12 @@ def composite_matrix_scatterplot(
             )
         else:
             # --- Distribution ---
-            trace = plot_distribution_histogram(plot_df, feats[i], show=False).data[0]
+            trace = plot_distribution(plot_df, feats[i], show=False).data[0]
             fig.add_trace(trace, row=i + 1, col=j + 1)
     fig.show()
 
 
-def composite_summary_plot(
+def plot_ts_overview(
         df,
         y_col: str = None,
         nlags=None,
@@ -964,13 +964,13 @@ def composite_summary_plot(
     fig.update_yaxes(title_text="Frequency", row=2, col=2)
 
     # --- Time series ---
-    ts_trace = time_series_plot(plot_df, y_cols=[y_col], show=False).data[0]
+    ts_trace = plot_ts(plot_df, y_cols=[y_col], show=False).data[0]
 
     # --- ACF ---
-    acf_traces = plotly_acf(plot_df, y_col=y_col, nlags=nlags, alpha=alpha, show=False).data
+    acf_traces = plot_acf(plot_df, y_col=y_col, nlags=nlags, alpha=alpha, show=False).data
 
     # --- Distribution ---
-    dist_trace = plot_distribution_histogram(plot_df, y_col=y_col, show=False).data[0]
+    dist_trace = plot_distribution(plot_df, y_col=y_col, show=False).data[0]
 
     fig.add_trace(
         ts_trace,
