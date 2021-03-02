@@ -37,16 +37,6 @@ def harmonics(dates, period, n, epoch=datetime(1900, 1, 1)):
     return d
 
 
-def datetimediv(dividend, delta):
-    seconds = int((dividend - dt.datetime.min).total_seconds())
-    remainder = dt.timedelta(
-        seconds=seconds % delta.total_seconds(),
-        microseconds=dividend.microsecond,
-    )
-    quotient = dividend - remainder
-    return quotient, remainder
-
-
 def boxcox(x):
     return stats.boxcox(x)[0]
 

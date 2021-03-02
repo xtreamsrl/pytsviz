@@ -69,12 +69,12 @@ template = dict(
 
 
 def _plot_plotly(
-        df,
-        kind,
-        x_title="",
-        y_title="",
-        x_type="-",
-        y_type="-",
+        df: pd.DataFrame,
+        kind: str,
+        x_title: str = "",
+        y_title: str = "",
+        x_type: str = "-",
+        y_type: str = "-",
         **kwargs
 ):
     with pd.option_context("plotting.backend", "plotly"):
@@ -93,14 +93,14 @@ def _plot_plotly(
 
 
 def plot_acf(
-        df,
+        df: pd.DataFrame,
         y_col: str = None,
         time_col: str = None,
         partial: bool = False,
         nlags: int = None,
-        title=None,
-        show_threshold=True,
-        show=True,
+        title: str = None,
+        show_threshold: bool = True,
+        show: bool = True,
         **kwargs
 ):
     """
@@ -190,16 +190,16 @@ def plot_acf(
 
 
 def plot_psd(
-        df,
+        df: pd.DataFrame,
         y_col: str = None,
         time_col: str = None,
-        nfft=None,
-        fs=1,
-        min_period=0,
-        max_period=np.inf,
-        plot_time=False,
-        title=None,
-        show=True,
+        nfft: int = None,
+        fs: int = 1,
+        min_period: int = 0,
+        max_period: int = np.inf,
+        plot_time: bool = False,
+        title: str = None,
+        show: bool = True,
         **kwargs
 ):
     """
@@ -248,14 +248,14 @@ def plot_psd(
 
 
 def plot_ts_analysis(
-        df,
+        df: pd.DataFrame,
         y_col: str = None,
         time_col: str = None,
-        nfft=1024,
-        nlags=None,
-        alpha=0.1,
-        show=True,
-        title=None
+        nfft: int = 1024,
+        nlags: int = None,
+        alpha: float = 0.1,
+        show: bool= True,
+        title: str = None
 ):
     """
     Comprehensive plotly plot showing: line plot of time series, spectral density, ACF and PACF.
@@ -347,12 +347,12 @@ def plot_ts_analysis(
 
 
 def plot_distribution(
-        df,
+        df: pd.DataFrame,
         y_col: str = None,
         time_col: str = None,
-        bins=None,
-        title="",
-        show=True
+        bins: int = None,
+        title: str = "",
+        show: bool = True
 ):
     """
     Plotly histogram of a time series. Useful to assess marginal distribution shape.
@@ -390,21 +390,21 @@ def plot_distribution(
 
 
 def plot_gof(
-        df,
+        df: pd.DataFrame,
         y_col: str,
         y_hat_col: str,
         time_col: str = None,
         lags: int = None,
-        alpha=0.1,
-        title="Goodness of Fit",
-        subplot_titles=(
+        alpha: float = 0.1,
+        title: str = "Goodness of Fit",
+        subplot_titles: Tuple[str, str, str, str, str] = (
                 "Actual vs Predicted Series",
                 "Actual vs Predicted Scatter",
                 "Residuals",
                 "Residuals ACF",
                 "Residuals PACF"
         ),
-        show=True
+        show: bool = True
 ):
     """
     Shows an interactive plot of goodness of fit visualizations. In order: Actual Series vs Predicted Series,
@@ -478,7 +478,8 @@ def plot_gof(
             col=1,
         )
 
-    resid_pacf_traces = plot_acf(plot_df.dropna(), y_col="Resid", partial=True, nlags=lags, alpha=alpha, show=False).data
+    resid_pacf_traces = plot_acf(plot_df.dropna(), y_col="Resid", partial=True, nlags=lags, alpha=alpha,
+                                 show=False).data
     for trace in resid_pacf_traces:
         fig.add_trace(
             trace,
@@ -512,7 +513,7 @@ def plot_ts(
         tf_args: Tuple = (),
         tf_kwargs: dict = None,
         keep_original: bool = True,
-        show=True
+        show: bool = True
 ):
     if tf_kwargs is None:
         tf_kwargs = {}
@@ -546,8 +547,8 @@ def plot_seasonal_ts(
         y_col: str = None,
         time_col: str = None,
         title: str = None,
-        subplots=False,
-        show=True
+        subplots: bool = False,
+        show: bool = True
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -601,7 +602,7 @@ def plot_decomposed_ts(
         time_col: str = None,
         title: str = None,
         subplots: bool = True,
-        show=True,
+        show: bool = True,
         **decomp_kwargs
 ):
     plot_df = df.copy()
@@ -649,7 +650,7 @@ def plot_forecast(
         upper_col: str = None,
         time_col: str = None,
         title: str = None,
-        show=True
+        show: bool = True
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -701,14 +702,14 @@ def plot_forecast(
 
 
 def plot_scatter_matrix(
-        df,
+        df: pd.DataFrame,
         var1: str,
         var2: str = None,
         lags1: List[int] = None,
         lags2: List[int] = None,
         time_col: str = None,
         title: str = None,
-        show=True
+        show: bool = True
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -771,13 +772,13 @@ def plot_scatter_matrix(
 
 
 def plot_scatter_fit(
-        df,
+        df: pd.DataFrame,
         var1: str,
         var2: str,
         time_col: str = None,
         title: str = None,
         fit: Union[bool, Literal["summary"]] = False,
-        show=True,
+        show: bool = True,
         **kwargs
 ):
     plot_df = df.copy()
@@ -815,7 +816,7 @@ def plot_scatter_fit(
 
 def plot_inverse_arma_roots(
         process: ArmaProcess,
-        show=True
+        show: bool = True
 ):
     copied_process = deepcopy(process)
     roots = copied_process.arroots
@@ -868,11 +869,11 @@ def plot_inverse_arma_roots(
 
 
 def plot_extended_scatter_matrix(
-        df,
+        df: pd.DataFrame,
         time_col: str = None,
         y_cols: List[str] = None,
         title: str = None,
-        show=True
+        show: bool = True
 ):
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -945,12 +946,12 @@ def plot_extended_scatter_matrix(
 
 
 def plot_ts_overview(
-        df,
+        df: pd.DataFrame,
         y_col: str = None,
-        nlags=None,
-        alpha=0.1,
-        show=True,
-        title=None
+        nlags: int = None,
+        alpha: float = 0.1,
+        show: bool = True,
+        title: str = None
 ):
     plot_df = df.copy()
     y_col = y_col if y_col else plot_df.columns[0]
