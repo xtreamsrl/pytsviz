@@ -37,10 +37,6 @@ testing_dict = {
             "df": df,
             "y_col": "LTC"
     },
-    plotly_pacf: {
-            "df": df,
-            "y_col": "LTC"
-    },
     plotly_psd: {
             "df": df,
             "y_col": "LTC"

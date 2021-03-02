@@ -9,12 +9,10 @@ import plotly
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-from matplotlib import gridspec
 from matplotlib import pyplot as plt
 from numpy.core import linspace
 from scipy.signal import periodogram
 from scipy.stats import pearsonr
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa._stl import STL
 from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.stattools import acf, pacf
@@ -97,6 +95,7 @@ def plotly_acf(
         df,
         y_col: str = None,
         time_col: str = None,
+        partial: bool = False,
         nlags: int = None,
         title=None,
         show_threshold=True,
@@ -123,8 +122,10 @@ def plotly_acf(
     if nlags is None:
         nlags = int(len(plot_df) / 2 - 1)
 
+    cf = pacf if partial else acf
+
     if kwargs.get("alpha"):
-        acf_values, conf_int = acf(df, nlags=nlags, fft=False, **kwargs)
+        acf_values, conf_int = cf(df[y_col], nlags=nlags, **kwargs)
         acf_values = acf_values[1:]
 
         conf_int = [np.array(x) for x in zip(*conf_int)]
@@ -133,22 +134,22 @@ def plotly_acf(
         c_upper = conf_int[1][1:] - acf_values
 
     else:
-        acf_values = acf(plot_df, nlags=nlags, fft=False, **kwargs)
+        acf_values = cf(plot_df[y_col], nlags=nlags, **kwargs)
         acf_values = acf_values[1:]
 
         c_lower = None
         c_upper = None
 
-    plot_df = pd.DataFrame(
+    acf_df = pd.DataFrame(
         {
             "lag": linspace(1, nlags, nlags),
             "acf": acf_values
         }
     )
 
-    def_title = "ACF"
+    def_title = "PACF" if partial else "ACF"
     fig = _plot_plotly(
-        plot_df,
+        acf_df,
         kind="bar",
         x="lag",
         y="acf",
@@ -164,7 +165,7 @@ def plotly_acf(
         fig.add_trace(
             go.Scatter(
                 mode='lines',
-                x=plot_df["lag"],
+                x=acf_df["lag"],
                 y=[threshold] * len(acf_values),
                 line=dict(color='Red', dash='dash'),
                 showlegend=False,
@@ -174,91 +175,8 @@ def plotly_acf(
         fig.add_trace(
             go.Scatter(
                 mode='lines',
-                x=plot_df["lag"],
+                x=acf_df["lag"],
                 y=[- threshold] * len(acf_values),
-                line=dict(color='Red', dash='dash'),
-                showlegend=False,
-                hoverinfo='skip'
-            )
-        )
-    if show:
-        fig.show()
-    else:
-        return fig
-
-
-def plotly_pacf(
-        series,
-        nlags,
-        title=None,
-        show_threshold=True,
-        show=True,
-        **kwargs
-):
-    """
-    Interactive barplot of the partial autocorrelation function of a time series up to a certain lag
-
-    :param series: Time series
-    :type series: `array-like`
-    :param nlags: Maximum lag to consider
-    :type nlags: `int`
-    :param title: Plot Title
-    :type title: `str`, default *"ACF"*
-    :return: Plotly figure
-    :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
-    """
-    if kwargs.get("alpha"):
-        pacf_values, conf_int = pacf(series, nlags=nlags, **kwargs)
-        pacf_values = pacf_values[1:]
-
-        conf_int = [np.array(x) for x in zip(*conf_int)]
-
-        c_lower = pacf_values - conf_int[0][1:]
-        c_upper = conf_int[1][1:] - pacf_values
-
-    else:
-        pacf_values = pacf(series, nlags=nlags, **kwargs)
-        pacf_values = pacf_values[1:]
-
-        c_lower = None
-        c_upper = None
-
-    plot_df = pd.DataFrame(
-        {
-            "lag": linspace(1, nlags, nlags),
-            "pacf": pacf_values
-        }
-    )
-    def_title = "PACF"
-    fig = _plot_plotly(
-        plot_df,
-        kind="bar",
-        x="lag",
-        y="pacf",
-        title=title if title else def_title,
-        error_y=c_upper,
-        error_y_minus=c_lower,
-        x_title="Lag",
-        y_title="Value"
-    )
-
-    if show_threshold:
-        threshold = 2 / np.sqrt(len(pacf_values))
-        fig.add_trace(
-            go.Scatter(
-                mode='lines',
-                x=plot_df["lag"],
-                y=[threshold] * len(pacf_values),
-                line=dict(color='Red', dash='dash'),
-                showlegend=False,
-                hoverinfo='skip'
-            )
-        )
-        fig.add_trace(
-            go.Scatter(
-                mode='lines',
-                x=plot_df["lag"],
-                y=[- threshold] * len(pacf_values),
                 line=dict(color='Red', dash='dash'),
                 showlegend=False,
                 hoverinfo='skip'
@@ -307,13 +225,13 @@ def plotly_psd(
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df.filter(y_col)
 
-    f, spectral_density = periodogram(plot_df, fs=fs, nfft=nfft, **kwargs)
-    plt_df = pd.DataFrame({"f": f, "spectral_density": spectral_density})
-    plt_df["t"] = 1 / plt_df.f
-    plt_df = plt_df[(plt_df.t < max_period) & (plt_df.t > min_period)]
+    f, spectral_density = periodogram(plot_df[y_col], fs=fs, nfft=nfft, **kwargs)
+    spectral_df = pd.DataFrame({"f": f, "spectral_density": spectral_density})
+    spectral_df["t"] = 1 / spectral_df.f
+    spectral_df = spectral_df[(spectral_df.t < max_period) & (spectral_df.t > min_period)]
     def_title = "PSD"
     return _plot_plotly(
-        plt_df,
+        spectral_df,
         x="t" if plot_time else "f",
         y="spectral_density",
         kind="hist",
@@ -321,55 +239,6 @@ def plotly_psd(
         y_title="Density",
         title=title if title else def_title,
     )
-
-
-def tsdisplay(
-        series,
-        nfft=None,
-        lags=None,
-        plot_time=True,
-        title="Time series analysis",
-):
-    """
-    Comprehensive matplotlib plot showing: line plot of time series, spectral density, ACF and PACF.
-
-    :param series: Time series
-    :type series: `array-like`
-    :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
-    :type nfft: `int`, optional, default *None*
-    :param lags: Number of lags to compute ACF and PACF
-    :type lags: `int`, default 192
-    :param plot_time: If *True*, plot time on the *x* axis for spectral density, else plot sampling frequency.
-    :type plot_time: `bool`, default *True*
-    :param title: Plot title
-    :type title: `str`, default *"Time series analysis"*
-    :return: Matplotlib figure
-    :rtype: :py:class:`matplotlib.figure.Figure`
-    """
-    if lags is None:
-        lags = int(len(series) / 2 - 1)
-    series = pd.Series(series)
-    gs = gridspec.GridSpec(3, 2)
-    fig = plt.figure()
-    plt.subplot(gs[0, :])
-    series.plot(title=title)
-    plt.subplot(gs[1, :])
-    f, pxx = periodogram(series, nfft=nfft)
-    f = f[1:]
-    t = 1 / f
-    pxx = pxx[1:]
-    if plot_time:
-        plt.plot(t, pxx)
-    else:
-        plt.plot(f, pxx)
-    plt.title("Periodogram")
-    plt.subplot(gs[2, 0])
-    plot_acf(series, ax=plt.gca(), lags=lags, marker=None)
-    plt.subplot(gs[2, 1])
-    plot_pacf(series, ax=plt.gca(), lags=lags, marker=None)
-    plt.tight_layout()
-    plt.close()
-    return fig
 
 
 def plotly_tsdisplay(
@@ -422,7 +291,7 @@ def plotly_tsdisplay(
     fig.update_yaxes(title_text="Value", row=2, col=2)
 
     # --- Periodogram ---
-    f, pxx = periodogram(plot_df, nfft=nfft)
+    f, pxx = periodogram(plot_df[y_col], nfft=nfft)
     f = f[1:]
     t = 1 / f
     pxx = pxx[1:]
@@ -444,7 +313,7 @@ def plotly_tsdisplay(
     acf_traces = plotly_acf(plot_df, nlags=nlags, alpha=alpha, show=False).data
 
     # --- PACF ---
-    pacf_traces = plotly_pacf(plot_df, nlags=nlags, alpha=alpha, show=False).data
+    pacf_traces = plotly_acf(plot_df, nlags=nlags, partial=True, alpha=alpha, show=False).data
 
     fig.add_trace(
         periodogram_trace,
@@ -596,7 +465,7 @@ def plot_gof(
     if lags is None:
         lags = int(len(plot_df["Resid"].dropna()) / 2 - 1)
 
-    resid_acf_traces = plotly_acf(plot_df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
+    resid_acf_traces = plotly_acf(plot_df.dropna(), y_col="Resid", nlags=lags, alpha=alpha, show=False).data
     for trace in resid_acf_traces:
         fig.add_trace(
             trace,
@@ -604,7 +473,7 @@ def plot_gof(
             col=1,
         )
 
-    resid_pacf_traces = plotly_pacf(plot_df["Resid"].dropna(), nlags=lags, alpha=alpha, show=False).data
+    resid_pacf_traces = plotly_acf(plot_df.dropna(), y_col="Resid", partial=True, nlags=lags, alpha=alpha, show=False).data
     for trace in resid_pacf_traces:
         fig.add_trace(
             trace,
@@ -1055,7 +924,7 @@ def composite_matrix_scatterplot(
             )
         else:
             # --- Distribution ---
-            trace = plot_distribution_histogram(x, show=False).data[0]
+            trace = plot_distribution_histogram(plot_df, feats[i], show=False).data[0]
             fig.add_trace(trace, row=i + 1, col=j + 1)
     fig.show()
 
