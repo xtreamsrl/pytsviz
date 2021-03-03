@@ -2,7 +2,6 @@
 The *utils* module contains utilies not strictly related to visualization which we often use (eg harmonics computation).
 """
 
-import datetime as dt
 from datetime import datetime
 import numpy as np
 import pandas as pd
