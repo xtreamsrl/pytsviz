@@ -2,9 +2,11 @@
 
 *pytsviz* is a suite of tools to quickly analyze and visualize time series data. It is partially based on the [*tsviz*](https://github.com/xtreamsrl/tsviz) R package.
 
-The *utils* module contains a set of useful utilies, not strictly realted to visualization, we often use (e.g. harmonics computation).
-The *viz* module contains a lot of functions to quickly visualize the main aspects of a univariate time series. Most of them can be run backed by either *matplotlib* or *Plotly*.
+The *utils* module contains a set of useful utilies, not strictly related to visualization, we often use (e.g. harmonics computation).
+The *viz* module contains functions for plotting univariate time series, as well as performing quick qualitative analyses such as decompositions, correlations and so on.
 
+Some of the visualizations mimic the R packages *ggplot2* and *forecast*, as presented in the textbook *Forecasting: principles and practice* by Rob J. Hyndman and George Athanasopoulos.
+The online version of the text can be found [here](https://otexts.com/fpp3/).
 
 ## Install
 
