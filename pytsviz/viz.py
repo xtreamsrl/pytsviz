@@ -1,6 +1,5 @@
-"""
-The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (partial) correlograms, periodograms, line plots, ...
-"""
+"""The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (
+partial) correlograms, periodograms, line plots, ... """
 from copy import deepcopy
 from itertools import product
 from typing import List, Callable, Iterable, Tuple, Any, Union, Literal
@@ -10,7 +9,6 @@ import plotly
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-from matplotlib import pyplot as plt
 from numpy.core import linspace
 from scipy.signal import periodogram
 from scipy.stats import pearsonr
@@ -24,8 +22,6 @@ from pytsviz.utils import (
     get_components,
     apply_grad_color_to_traces,
 )
-
-plt.rcParams["figure.figsize"] = (10, 6)
 
 colorway = plotly.colors.qualitative.Dark24
 seq_colorscale = plotly.colors.sequential.PuBuGn
@@ -65,7 +61,18 @@ def _plot_plotly(
     x_type: str = "-",
     y_type: str = "-",
     **kwargs,
-):
+) -> go.Figure:
+    """
+    Wrapper for pandas plot function, with plotly backend and the application of the default styling template.
+    :param df:
+    :param kind:
+    :param x_title:
+    :param y_title:
+    :param x_type:
+    :param y_type:
+    :param kwargs:
+    :return:
+    """
     with pd.option_context("plotting.backend", "plotly"):
         fig = df.plot(kind=kind, template=template, **kwargs)
     fig.update_layout(
@@ -91,8 +98,12 @@ def plot_acf(
     """
     Interactive barplot of the autocorrelation function of a time series up to a certain lag
 
-    :param series: Time series
-    :type series: `array-like`
+    :param df:
+    :param y_col:
+    :param time_col:
+    :param partial:
+    :param show_threshold:
+    :param show:
     :param nlags: Maximum lag to consider
     :type nlags: `int`
     :param title: Plot Title
@@ -187,8 +198,10 @@ def plot_psd(
     """
     Interactive histogram of the spectral density of a time series
 
-    :param series: Time series
-    :type series: `array-like`
+    :param df:
+    :param y_col:
+    :param time_col:
+    :param show:
     :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
     :type nfft: `int`, optional, default *None*
     :param fs: Sampling frequency of `series`.
@@ -246,8 +259,12 @@ def plot_ts_analysis(
     """
     Comprehensive plotly plot showing: line plot of time series, spectral density, ACF and PACF.
 
-    :param series: Time series
-    :type series: `array-like`
+    :param df:
+    :param y_col:
+    :param time_col:
+    :param alpha:
+    :param show:
+    :param title:
     :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
     :type nfft: `int`, optional, default *None*
     :param nlags: Number of lags to compute ACF and PACF
@@ -285,7 +302,6 @@ def plot_ts_analysis(
     # --- Periodogram ---
     f, pxx = periodogram(plot_df[y_col], nfft=nfft)
     f = f[1:]
-    t = 1 / f
     pxx = pxx[1:]
     periodogram_df = pd.DataFrame(dict(freq=f, density=pxx))
 
@@ -328,14 +344,14 @@ def plot_distribution(
     """
     Plotly histogram of a time series. Useful to assess marginal distribution shape.
 
-    :param series: Time series
-    :type series: Array-like
+    :param df:
+    :param y_col:
+    :param time_col:
+    :param show:
     :param bins: Number of bins in the histogram
     :type bins: `int`, default 10
     :param title: Plot Title
     :type title: `str`, default ""
-    :param color: Histogram color, check Plotly docs for accepted values
-    :type color: `str`, default "royalblue"
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
@@ -381,16 +397,15 @@ def plot_gof(
     Shows an interactive plot of goodness of fit visualizations. In order: Actual Series vs Predicted Series,
     Residuals series, and Actual vs Predicted scatter plot.
 
-    :param y: Actual series
-    :type y: `array-like`
-    :param y_hat: Predicted series
-    :type y_hat: Array-like
+    :param df:
+    :param y_col:
+    :param y_hat_col:
+    :param time_col:
+    :param lags:
+    :param alpha:
+    :param show:
     :param title: Plot Title
     :type title: `str`, default *"Goodness of Fit"*
-    :param actual_name: String to name *actual* series. Shown in axis labels and legend.
-    :type actual_name: `str`, default *"Actual"*
-    :param predicted_name: String to name *predicted* series. Shown in axis labels and legend.
-    :type predicted_name: `str`, default *"Actual"*
     :param subplot_titles: Tuple of titles for each of the 3 subplots.
     :type subplot_titles: `tuple(str, str, str)`, default (*'Actual vs Predicted Series'*, *'Residuals'*,
      *Actual vs Predicted Scatter'*)
@@ -486,6 +501,19 @@ def plot_ts(
     keep_original: bool = True,
     show: bool = True,
 ):
+    """
+
+    :param df:
+    :param y_cols:
+    :param time_col:
+    :param title:
+    :param tf:
+    :param tf_args:
+    :param tf_kwargs:
+    :param keep_original:
+    :param show:
+    :return:
+    """
     if tf_kwargs is None:
         tf_kwargs = {}
     plot_df = df.copy()
@@ -535,6 +563,17 @@ def plot_seasonal_ts(
     subplots: bool = False,
     show: bool = True,
 ):
+    """
+
+    :param df:
+    :param period:
+    :param y_col:
+    :param time_col:
+    :param title:
+    :param subplots:
+    :param show:
+    :return:
+    """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
@@ -602,6 +641,18 @@ def plot_decomposed_ts(
     show: bool = True,
     **decomp_kwargs,
 ):
+    """
+
+    :param df:
+    :param method:
+    :param y_col:
+    :param time_col:
+    :param title:
+    :param subplots:
+    :param show:
+    :param decomp_kwargs:
+    :return:
+    """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
@@ -649,6 +700,18 @@ def plot_forecast(
     title: str = None,
     show: bool = True,
 ):
+    """
+
+    :param df:
+    :param y_col:
+    :param fc_cols:
+    :param lower_col:
+    :param upper_col:
+    :param time_col:
+    :param title:
+    :param show:
+    :return:
+    """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     line_df = plot_df.filter(items=[y_col] + fc_cols)
@@ -708,6 +771,18 @@ def plot_scatter_matrix(
     title: str = None,
     show: bool = True,
 ):
+    """
+
+    :param df:
+    :param var1:
+    :param var2:
+    :param lags1:
+    :param lags2:
+    :param time_col:
+    :param title:
+    :param show:
+    :return:
+    """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     if var2 is None and lags1 is None:
@@ -775,6 +850,18 @@ def plot_scatter_fit(
     show: bool = True,
     **kwargs,
 ):
+    """
+
+    :param df:
+    :param var1:
+    :param var2:
+    :param time_col:
+    :param title:
+    :param fit:
+    :param show:
+    :param kwargs:
+    :return:
+    """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     if fit is not False:
@@ -809,6 +896,12 @@ def plot_scatter_fit(
 
 
 def plot_inverse_arma_roots(process: ArmaProcess, show: bool = True):
+    """
+
+    :param process:
+    :param show:
+    :return:
+    """
     copied_process = deepcopy(process)
     roots = copied_process.arroots
     inv_roots = 1 / roots
@@ -816,7 +909,7 @@ def plot_inverse_arma_roots(process: ArmaProcess, show: bool = True):
     im = [x.imag for x in inv_roots]
     inv_roots_df = pd.DataFrame(
         {
-            "Root": [str(round(r, 5))[1:-1] for r in inv_roots],
+            "Root": [str(np.round(r, 5))[1:-1] for r in inv_roots],
             "Re": re,
             "Im": im,
         }
@@ -865,6 +958,15 @@ def plot_extended_scatter_matrix(
     title: str = None,
     show: bool = True,
 ):
+    """
+
+    :param df:
+    :param time_col:
+    :param y_cols:
+    :param title:
+    :param show:
+    :return:
+    """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     if y_cols:
@@ -940,6 +1042,16 @@ def plot_ts_overview(
     show: bool = True,
     title: str = None,
 ):
+    """
+
+    :param df:
+    :param y_col:
+    :param nlags:
+    :param alpha:
+    :param show:
+    :param title:
+    :return:
+    """
     plot_df = df.copy()
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df = plot_df.filter(items=[y_col])
