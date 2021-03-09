@@ -16,6 +16,7 @@ statsmodels = "^0.12.2"
 matplotlib = "^3.2.1"
 sklearn = "^0.0"
 colour = "^0.1.5"
+nbstripout = "^0.3.9"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^20.8b1", allow-prereleases = true}
