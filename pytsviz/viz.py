@@ -1,9 +1,13 @@
 """The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (
 partial) correlograms, periodograms, line plots, ... """
+import math
 from copy import deepcopy
 from itertools import product
 from typing import List, Callable, Iterable, Tuple, Any, Union, Literal
 import numpy as np
+import warnings
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 import pandas as pd
 import plotly
 import plotly.graph_objs as go
@@ -117,7 +121,11 @@ def plot_acf(
     plot_df = plot_df.filter(items=[y_col])
 
     if nlags is None:
-        nlags = int(len(plot_df) / 2 - 1)
+        nlags = (
+            math.floor(len(plot_df) / 4)
+            if partial
+            else math.floor(len(plot_df) / 2)
+        )
 
     cf = pacf if partial else acf
 
@@ -251,7 +259,8 @@ def plot_ts_analysis(
     y_col: str = None,
     time_col: str = None,
     nfft: int = 1024,
-    nlags: int = None,
+    acf_nlags: int = None,
+    pacf_nlags: int = None,
     alpha: float = 0.1,
     show: bool = True,
     title: str = None,
@@ -259,6 +268,8 @@ def plot_ts_analysis(
     """
     Comprehensive plotly plot showing: line plot of time series, spectral density, ACF and PACF.
 
+    :param acf_nlags:
+    :param pacf_nlags:
     :param df:
     :param y_col:
     :param time_col:
@@ -267,8 +278,6 @@ def plot_ts_analysis(
     :param title:
     :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
     :type nfft: `int`, optional, default *None*
-    :param nlags: Number of lags to compute ACF and PACF
-    :type nlags: `int`, default 192
     :return: Plotly figure
     :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
     """
@@ -277,8 +286,10 @@ def plot_ts_analysis(
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df = plot_df.filter(items=[y_col])
 
-    if nlags is None:
-        nlags = int(len(plot_df) / 2 - 1)
+    if acf_nlags is None:
+        acf_nlags = math.floor(len(plot_df) / 2)
+    if pacf_nlags is None:
+        pacf_nlags = math.floor(len(plot_df) / 4)
 
     fig = make_subplots(
         rows=2,
@@ -313,11 +324,13 @@ def plot_ts_analysis(
     ).data[0]
 
     # --- ACF ---
-    acf_traces = plot_acf(plot_df, nlags=nlags, alpha=alpha, show=False).data
+    acf_traces = plot_acf(
+        plot_df, nlags=acf_nlags, alpha=alpha, show=False
+    ).data
 
     # --- PACF ---
     pacf_traces = plot_acf(
-        plot_df, nlags=nlags, partial=True, alpha=alpha, show=False
+        plot_df, nlags=pacf_nlags, partial=True, alpha=alpha, show=False
     ).data
 
     fig.add_trace(periodogram_trace, row=1, col=1)
@@ -381,7 +394,8 @@ def plot_gof(
     y_col: str,
     y_hat_col: str,
     time_col: str = None,
-    lags: int = None,
+    acf_nlags: int = None,
+    pacf_nlags: int = None,
     alpha: float = 0.1,
     title: str = "Goodness of Fit",
     subplot_titles: Tuple[str, str, str, str, str] = (
@@ -397,11 +411,12 @@ def plot_gof(
     Shows an interactive plot of goodness of fit visualizations. In order: Actual Series vs Predicted Series,
     Residuals series, and Actual vs Predicted scatter plot.
 
+    :param pacf_nlags:
+    :param acf_nlags:
     :param df:
     :param y_col:
     :param y_hat_col:
     :param time_col:
-    :param lags:
     :param alpha:
     :param show:
     :param title: Plot Title
@@ -445,11 +460,17 @@ def plot_gof(
             col=2,
         )
 
-    if lags is None:
-        lags = int(len(plot_df["Resid"].dropna()) / 2 - 1)
+    if acf_nlags is None:
+        acf_nlags = math.floor(len(plot_df["Resid"].dropna()) / 2)
+    if pacf_nlags is None:
+        pacf_nlags = math.floor(len(plot_df["Resid"].dropna()) / 4)
 
     resid_acf_traces = plot_acf(
-        plot_df.dropna(), y_col="Resid", nlags=lags, alpha=alpha, show=False
+        plot_df.dropna(),
+        y_col="Resid",
+        nlags=acf_nlags,
+        alpha=alpha,
+        show=False,
     ).data
     for trace in resid_acf_traces:
         fig.add_trace(
@@ -462,7 +483,7 @@ def plot_gof(
         plot_df.dropna(),
         y_col="Resid",
         partial=True,
-        nlags=lags,
+        nlags=pacf_nlags,
         alpha=alpha,
         show=False,
     ).data
@@ -1057,7 +1078,7 @@ def plot_ts_overview(
     plot_df = plot_df.filter(items=[y_col])
 
     if nlags is None:
-        nlags = int(len(plot_df) / 2 - 1)
+        nlags = math.floor(len(plot_df) / 2)
 
     fig = make_subplots(
         rows=2,
