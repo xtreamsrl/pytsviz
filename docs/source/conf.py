@@ -55,6 +55,7 @@ autodoc_default_flags = [
     'show-inheritance'
 ]
 autoclass_content = 'both'
+# autodoc_mock_imports = ['numpy', 'pandas', 'colour', 'scipy', 'plotly', 'statsmodels']
 
 # Intersphinx settings
 intersphinx_mapping = {
@@ -99,8 +100,7 @@ if FORCE_RTD:
         'sticky_navigation': True,
         'navigation_depth': 4,
         'includehidden': True,
-        'titles_only': False,
-        'github_url': 'https://github.com/xtreamsrl/pytsviz'
+        'titles_only': False
     }
 else:
     import sphinx_material
