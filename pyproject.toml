@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pytsviz"
 version = "0.1.0"
-description = ""
+description = "A suite of tools to quickly analyze and visualize time series data."
 license = "MIT"
 authors = ["xtream <oss@xtreamers.io>", "Emanuele Fabiani <emanuele.fabiani@xtreamers.io>", "Gabriele Orlandi <gabriele.orlandi@xtreamers.io>", "Riccardo Maganza <riccardo.maganza@xtreamers.io>"]
 maintainers = ["xtream <oss@xtreamers.io>", "Emanuele Fabiani <emanuele.fabiani@xtreamers.io>", "Riccardo Zoncada <riccardo.zoncada@xtreamers.io>"]
