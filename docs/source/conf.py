@@ -31,17 +31,11 @@ release = "0.0.1"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.doctest",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.todo",
-    "sphinx.ext.coverage",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.githubpages",
-    "sphinx.ext.napoleon",
+    'myst_parser',
+    'nbsphinx',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
 ]
 
 # Napoleon settings
@@ -55,11 +49,11 @@ napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
 
-autosummary_generate = True
-
+# Autodoc settings
 autodoc_default_flags = [
-    # Make sure that any autodoc declarations show the right members
-    "members"
+    'members',
+    'undoc-members',
+    'show-inheritance'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
