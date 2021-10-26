@@ -1,5 +1,8 @@
 # pytsviz
 
+![GitHub](https://img.shields.io/github/license/xtreamsrl/pytsviz)
+![GitHub issues](https://img.shields.io/github/issues/xtreamsrl/pytsviz)
+
 *pytsviz* is a suite of tools to quickly analyze and visualize time series data. It is partially based on the [*tsviz*](https://github.com/xtreamsrl/tsviz) R package.
 
 The *utils* module contains a set of useful utilities, not strictly related to visualization, we often use (e.g. harmonics computation).
