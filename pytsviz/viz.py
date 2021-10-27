@@ -127,7 +127,7 @@ def plot_acf(
         acf_values, conf_int = cf(df[y_col], nlags=nlags, **kwargs)
         acf_values = acf_values[1:]
 
-        conf_int = [np.array(x) for x in zip(*conf_int)]
+        conf_int = [np.array(value) for value in zip(*conf_int)]
 
         c_lower = acf_values - conf_int[0][1:]
         c_upper = conf_int[1][1:] - acf_values
@@ -581,16 +581,12 @@ def plot_seasonal_ts(
     """
     Interactive plot of the seasonal components of a time series.
 
-
     :param df: Dataframe to use as the data source for the plot.
-    :param period: The periodicity of the seasonal component. It can be one of 'minute', 'hour', 'day', 'week',
-        'month', 'quarter', 'year' or a couple of callables specifying both the periodicity and the granularity of data
-         (e.g. daily periodicity, hourly granularity).
+    :param period: The periodicity of the seasonal component. It can be one of 'minute', 'hour', 'day', 'week', 'month', 'quarter', 'year' or a couple of callables specifying both the periodicity and the granularity of data (e.g. daily periodicity, hourly granularity).
     :param y_col: Name of the column from df to be used as time series values in the plot.
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param title: Plot title.
-    :param subplots: Whether to split the seasonal components into subplots. Should be set to *False* if the number of
-        components is too high.
+    :param subplots: Whether to split the seasonal components into subplots. Should be set to *False* if the number of components is too high.
     :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
     :return: Plotly figure if show is *True*, else nothing.
     """
@@ -600,12 +596,12 @@ def plot_seasonal_ts(
     season = period if isinstance(period, str) else "season"
 
     try:
-        plot_df[season] = valid_seasons["grouping"].get(
-            period, period[0]
-        )(plot_df.index)
-        plot_df.index = valid_seasons["granularity"].get(
-            period, period[1]
-        )(plot_df.index)
+        plot_df[season] = valid_seasons["grouping"].get(period, period[0])(
+            plot_df.index
+        )
+        plot_df.index = valid_seasons["granularity"].get(period, period[1])(
+            plot_df.index
+        )
     except TypeError:
         print(
             "'Period' param must be either a valid string ('minute', 'hour', 'day', 'week', 'month', 'quarter', "
@@ -846,14 +842,14 @@ def plot_scatter_matrix(
         )
 
         for x_var, y_var in product(feats_cols, feats_rows):
-            x = scatter_df[x_var]
-            y = scatter_df[y_var]
+            x_col = scatter_df[x_var]
+            y_col = scatter_df[y_var]
             if x_var != y_var:
                 i = feats_rows.index(y_var)
                 j = feats_cols.index(x_var)
                 # --- Scatterplot ---
                 scatter_trace = plot_scatter_fit(
-                    scatter_df, x, y, show=False
+                    df=scatter_df, x_col=x_col, y_col=y_col, show=False
                 ).data[0]
                 fig.add_trace(scatter_trace, row=i + 1, col=j + 1)
 
@@ -930,8 +926,8 @@ def plot_inverse_arma_roots(process: ArmaProcess, show: bool = True):
     copied_process = deepcopy(process)
     roots = copied_process.arroots
     inv_roots = 1 / roots
-    re = [x.real for x in inv_roots]
-    im = [x.imag for x in inv_roots]
+    re = [root.real for root in inv_roots]
+    im = [root.imag for root in inv_roots]
     inv_roots_df = pd.DataFrame(
         {
             "Root": [str(np.round(r, 5))[1:-1] for r in inv_roots],

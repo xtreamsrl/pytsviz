@@ -83,7 +83,7 @@ decomp_methods = {
     "seasonal_additive": {seasonal_decompose: {"model": "additive"}},
     "seasonal_multiplicative": {
         seasonal_decompose: {"model": "multiplicative"}
-    }
+    },
 }
 
 valid_components = [
@@ -93,7 +93,7 @@ valid_components = [
     "freq_seasonal",
     "cycle",
     "autoregressive",
-    "resid"
+    "resid",
 ]
 
 valid_seasons = {
@@ -112,14 +112,15 @@ valid_seasons = {
         "day": lambda x: x.hour,
         "week": lambda x: x.isocalendar().day,
         "month": lambda x: x.day,
-        "quarter": lambda x: (x - pd.PeriodIndex(x, freq="Q").start_time).days + 1,
+        "quarter": lambda x: (x - pd.PeriodIndex(x, freq="Q").start_time).days
+        + 1,
         "year": lambda x: x.dayofyear,
-    }
+    },
 }
 
 transform_dict = {
     "Box-Cox": boxcox,
     "Yeo-Johnson": yeojohnson,
     "log": np.vectorize(math.log),
-    "moving_average": moving_average
+    "moving_average": moving_average,
 }
