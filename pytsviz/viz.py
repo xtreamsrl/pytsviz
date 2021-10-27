@@ -15,7 +15,7 @@ from scipy.stats import pearsonr
 from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.stattools import acf, pacf
 
-from utils import *
+from .utils import *
 
 colorway = plotly.colors.qualitative.Dark24
 seq_colorscale = plotly.colors.sequential.PuBuGn
