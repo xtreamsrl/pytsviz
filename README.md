@@ -1,5 +1,8 @@
 # pytsviz
 
+![GitHub](https://img.shields.io/github/license/xtreamsrl/pytsviz)
+![GitHub issues](https://img.shields.io/github/issues/xtreamsrl/pytsviz)
+
 *pytsviz* is a suite of tools to quickly analyze and visualize time series data. It is partially based on the [*tsviz*](https://github.com/xtreamsrl/tsviz) R package.
 
 The *utils* module contains a set of useful utilities, not strictly related to visualization, we often use (e.g. harmonics computation).
@@ -37,3 +40,8 @@ Then, you're good to go.
 You're free to submit your pull requests. Just make sure they follow [conventional commit rules](https://www.conventionalcommits.org/en/v1.0.0/#specification). This can be enforced by the [*commitizen*](https://commitizen-tools.github.io/commitizen/) tool, which is also included among the package dependencies.
 
 Please also make sure that function documentation is consistent. We are currently using [Sphinx docstrings](https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html).
+
+
+# Who we are
+<img align="left" width="80" height="80" src="https://avatars2.githubusercontent.com/u/38501645?s=450&u=1eb7348ca81f5cd27ce9c02e689f518d903852b1&v=4">
+A proudly 🇮🇹 software development and data science startup.<br>We consider ourselves a family of talented and passionate people building their own products and powerful solutions for our clients. Get to know us more on <a target="_blank" href="https://xtreamers.io">xtreamers.io</a> or follow us on <a target="_blank" href="https://it.linkedin.com/company/xtream-srl">LinkedIn</a>.
