@@ -1,8 +1,14 @@
 [tool.poetry]
 name = "pytsviz"
 version = "0.1.0"
-description = ""
-authors = ["Riccardo Maganza <riccardo.maganza@xtream>"]
+description = "A suite of tools to quickly analyze and visualize time series data."
+license = "MIT"
+authors = ["xtream <oss@xtreamers.io>", "Emanuele Fabiani <emanuele.fabiani@xtreamers.io>", "Gabriele Orlandi <gabriele.orlandi@xtreamers.io>", "Riccardo Maganza <riccardo.maganza@xtreamers.io>"]
+maintainers = ["xtream <oss@xtreamers.io>", "Emanuele Fabiani <emanuele.fabiani@xtreamers.io>", "Riccardo Zoncada <riccardo.zoncada@xtreamers.io>"]
+readme = "README.md"
+repository = "https://github.com/xtreamsrl/pytsviz"
+documentation = "https://pytsviz.readthedocs.io/en/latest/"
+keywords = ["python", "data visualization", "time series", "data science"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -33,7 +39,14 @@ ipywidgets = ">=7.5"
 notebook = "^6.0.3"
 jupyter_nbextensions_configurator = "^0.4.1"
 cite2c = "^0.2.1"
-sphinx_rtd_theme = "^0.5.0"
+sphinx-material = "^0.0.35"
+nbsphinx = "^0.8.7"
+pandoc = "^1.1.0"
+sphinx-rtd-theme = "^1.0.0"
+myst-parser = "^0.15.2"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/xtreamsrl/pytsviz/issues"
 
 [tool.black]
 line-length = 79
@@ -51,10 +64,12 @@ exclude = '''
   | dist
 )/
 '''
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.0.1"
 tag_format = "$version"
+
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
