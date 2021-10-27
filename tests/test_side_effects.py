@@ -47,7 +47,7 @@ testing_dict = {
     plot_forecast: {
         "df": df,
         "y_col": "LTC",
-        "fc_cols": ["LTC_fc"],
+        "y_hat_cols": ["LTC_fc"],
         "lower_col": "LTC_lb",
         "upper_col": "LTC_ub",
     },
@@ -58,7 +58,7 @@ testing_dict = {
         "lags1": [5],
         "lags2": [5],
     },
-    plot_scatter_fit: {"df": df, "var1": "LTC", "var2": "BTC"},
+    plot_scatter_fit: {"df": df, "x_col": "LTC", "y_col": "BTC"},
     plot_inverse_arma_roots: {
         "process": sm.tsa.ArmaProcess(
             np.r_[1, np.array([-0.75, 0.25])], np.r_[1, np.array([0.65, 0.35])]
