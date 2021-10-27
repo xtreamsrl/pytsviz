@@ -20,12 +20,7 @@ from statsmodels.tsa._stl import STL
 from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.stattools import acf, pacf
 
-from pytsviz import global_vars
-from pytsviz.utils import (
-    set_time_index,
-    get_components,
-    apply_grad_color_to_traces,
-)
+from utils import *
 
 colorway = plotly.colors.qualitative.Dark24
 seq_colorscale = plotly.colors.sequential.PuBuGn

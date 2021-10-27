@@ -1,13 +1,17 @@
 """
-The *utils* module contains utilies not strictly related to visualization which we often use (eg harmonics computation).
+The *utils* module contains utilities not strictly related to visualization which we often use (eg harmonics computation).
 """
 
+import math
 from datetime import datetime
+from os.path import dirname
+
 import numpy as np
 import pandas as pd
 from colour import Color
 from scipy import stats
-from pytsviz import global_vars
+from statsmodels.tsa._stl import STL
+from statsmodels.tsa.seasonal import seasonal_decompose
 
 
 def harmonics(dates, period, n, epoch=datetime(1900, 1, 1)):
@@ -55,7 +59,7 @@ def set_time_index(df, time_col):
 
 def get_components(result):
     components = {}
-    for c in global_vars.valid_components:
+    for c in valid_components:
         if c in dir(result):
             components[c] = getattr(result, c)
     return components
@@ -70,3 +74,52 @@ def apply_grad_color_to_traces(fig, col1, col2):
     custom_colorscale = make_granular_colorscale(col1, col2, n_traces)
     for i in range(n_traces):
         fig["data"][i]["line"]["color"] = custom_colorscale[i]
+
+
+root_path = dirname(dirname(__file__))
+
+decomp_methods = {
+    "STL": {STL: {}},
+    "seasonal_additive": {seasonal_decompose: {"model": "additive"}},
+    "seasonal_multiplicative": {
+        seasonal_decompose: {"model": "multiplicative"}
+    }
+}
+
+valid_components = [
+    "level",
+    "trend",
+    "seasonal",
+    "freq_seasonal",
+    "cycle",
+    "autoregressive",
+    "resid"
+]
+
+valid_seasons = {
+    "grouping": {
+        "minute": lambda x: x.minute,
+        "hour": lambda x: x.hour,
+        "day": lambda x: x.isocalendar().day,
+        "week": lambda x: x.isocalendar().week,
+        "month": lambda x: x.month,
+        "quarter": lambda x: (x.month - 1) // 3 + 1,
+        "year": lambda x: x.isocalendar().year,
+    },
+    "granularity": {
+        "minute": lambda x: x.second,
+        "hour": lambda x: x.minute,
+        "day": lambda x: x.hour,
+        "week": lambda x: x.isocalendar().day,
+        "month": lambda x: x.day,
+        "quarter": lambda x: (x - pd.PeriodIndex(x, freq="Q").start_time).days + 1,
+        "year": lambda x: x.dayofyear,
+    }
+}
+
+transform_dict = {
+    "Box-Cox": boxcox,
+    "Yeo-Johnson": yeojohnson,
+    "log": np.vectorize(math.log),
+    "moving_average": moving_average
+}

@@ -7,8 +7,6 @@ import statsmodels.api as sm
 import pytest
 from collections.abc import Iterable
 
-
-from pytsviz.global_vars import root_path
 from pytsviz.viz import (
     plot_acf,
     plot_psd,
@@ -25,6 +23,7 @@ from pytsviz.viz import (
     plot_extended_scatter_matrix,
     plot_ts_overview,
 )
+from utils import root_path
 
 data_path = os.path.join(root_path, "data", "crypto.csv")
 
