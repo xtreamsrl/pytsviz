@@ -48,15 +48,6 @@ napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
 
-# Autodoc settings
-autodoc_default_flags = [
-    'members',
-    'undoc-members',
-    'show-inheritance'
-]
-autoclass_content = 'both'
-# autodoc_mock_imports = ['numpy', 'pandas', 'colour', 'scipy', 'plotly', 'statsmodels']
-
 # Intersphinx settings
 intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
