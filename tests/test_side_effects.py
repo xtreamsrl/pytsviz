@@ -24,7 +24,7 @@ from pytsviz.viz import (
     plot_extended_scatter_matrix,
     plot_ts_overview,
 )
-from utils import root_path
+from pytsviz.utils import root_path
 
 data_path = os.path.join(root_path, "data", "crypto.csv")
 
