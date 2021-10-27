@@ -1,22 +1,17 @@
-"""The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as (
-partial) correlograms, periodograms, line plots, ... """
-import math
+"""The *viz* module contains functions to visualize most of the key aspects of a univariate time series such as
+(partial) correlograms, periodograms, line plots, ... """
+
 from copy import deepcopy
 from itertools import product
 from typing import List, Callable, Iterable, Tuple, Any, Union, Literal
-import numpy as np
-import warnings
 
-warnings.simplefilter(action="ignore", category=FutureWarning)
-import pandas as pd
 import plotly
-import plotly.graph_objs as go
-from plotly.subplots import make_subplots
 import plotly.express as px
+import plotly.graph_objs as go
 from numpy.core import linspace
+from plotly.subplots import make_subplots
 from scipy.signal import periodogram
 from scipy.stats import pearsonr
-from statsmodels.tsa._stl import STL
 from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.stattools import acf, pacf
 
@@ -542,7 +537,7 @@ def plot_ts(
     if y_cols:
         plot_df = plot_df.filter(items=y_cols)
     if tf:
-        transformation = global_vars.transform_dict.get(tf, tf)
+        transformation = transform_dict.get(tf, tf)
         transformed_df = (
             plot_df.apply(transformation, args=tf_args, **tf_kwargs)
             .add_prefix(f"{tf}(")
@@ -605,10 +600,10 @@ def plot_seasonal_ts(
     season = period if isinstance(period, str) else "season"
 
     try:
-        plot_df[season] = global_vars.valid_seasons["grouping"].get(
+        plot_df[season] = valid_seasons["grouping"].get(
             period, period[0]
         )(plot_df.index)
-        plot_df.index = global_vars.valid_seasons["granularity"].get(
+        plot_df.index = valid_seasons["granularity"].get(
             period, period[1]
         )(plot_df.index)
     except TypeError:
@@ -684,7 +679,7 @@ def plot_decomposed_ts(
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df = plot_df.filter(items=[y_col])
 
-    decomp_model = global_vars.decomp_methods[method]
+    decomp_model = decomp_methods[method]
     decomp_func = list(decomp_model.keys())[0]
     kwargs = decomp_model[decomp_func]
     kwargs.update(decomp_kwargs)

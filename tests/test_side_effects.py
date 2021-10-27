@@ -1,11 +1,12 @@
 import os
+from collections.abc import Iterable
 from copy import deepcopy
 from typing import ItemsView
-import pandas as pd
+
 import numpy as np
-import statsmodels.api as sm
+import pandas as pd
 import pytest
-from collections.abc import Iterable
+import statsmodels.api as sm
 
 from pytsviz.viz import (
     plot_acf,
