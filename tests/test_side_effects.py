@@ -53,10 +53,10 @@ testing_dict = {
     },
     plot_scatter_matrix: {
         "df": df,
-        "var1": "LTC",
-        "var2": "BTC",
-        "lags1": [5],
-        "lags2": [5],
+        "x_col": "LTC",
+        "y_col": "BTC",
+        "lags_x": [5],
+        "lags_y": [5],
     },
     plot_scatter_fit: {"df": df, "x_col": "LTC", "y_col": "BTC"},
     plot_inverse_arma_roots: {
