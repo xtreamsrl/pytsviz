@@ -2,4 +2,5 @@ pytsviz.viz module
 ==================
 
 .. automodule:: pytsviz.viz
-   :members:
+    :members:
+    :private-members:
