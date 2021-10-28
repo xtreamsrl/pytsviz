@@ -5,6 +5,7 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/xtreamsrl/pytsviz/blob/master/docs/source/notebooks/data_visualization_examples.ipynb)
 [![Downloads](https://pepy.tech/badge/pytsviz)](https://pepy.tech/project/pytsviz)
 [![Documentation Status](https://readthedocs.org/projects/pytsviz/badge/?version=latest)](https://pytsviz.readthedocs.io/en/latest/?badge=latest)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/xtreamsrl/pytsviz/CI?label=tests)
 
 *pytsviz* is a suite of tools to quickly analyze and visualize time series data. It is partially based on the [*tsviz*](https://github.com/xtreamsrl/tsviz) R package.
 
