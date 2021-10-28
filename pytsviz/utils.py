@@ -14,21 +14,21 @@ from statsmodels.tsa._stl import STL
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 
-def harmonics(dates, period, n, epoch=datetime(1900, 1, 1)):
+def harmonics(
+    dates: pd.DataFrame,
+    period: int,
+    n: int,
+    epoch: datetime = datetime(1900, 1, 1),
+) -> pd.DataFrame:
     """
     Computes harmonics for the given dates. Each harmonic is made of a couple of sinusoidal and cosinusoidal waves
     with frequency i/period, i = 1...n. The argument of the functions is the number of hours from the starting epoch.
 
-    :param dates: a pandas series of dates
-    :type dates: :py:class:`pd.Series <pandas:pandas.Series>` of :py:class:`python:datetime.datetime`
-    :param period: the base period of the harmonics
-    :type period: `int`
-    :param n: the number of harmonics to include
-    :type n: `int`
-    :param epoch: the epoch used to compute the argument of the sin
-    :type epoch: :py:class:`python:datetime.datetime`
-    :return: a Pandas DataFrame with dates as index and harmonics as columns
-    :rtype: :py:class:`pandas:pandas.DataFrame`
+    :param dates: A pandas series of dates.
+    :param period: The base period of the harmonics.
+    :param n: The number of harmonics to include.
+    :param epoch: The epoch used to compute the argument of the sin.
+    :return: A Pandas DataFrame with dates as index and harmonics as columns.
     """
     d = pd.DataFrame(index=dates)
     hours = (dates - epoch) / pd.Timedelta(hours=1)

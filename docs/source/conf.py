@@ -38,7 +38,7 @@ extensions = [
 ]
 
 # nbsphinx settings
-nbsphinx_execute = 'always'
+nbsphinx_execute = "always"
 
 # Intersphinx settings
 intersphinx_mapping = {

@@ -3,12 +3,22 @@
 
 from copy import deepcopy
 from itertools import product
-from typing import List, Callable, Iterable, Tuple, Any, Union, Literal
+from typing import (
+    List,
+    Callable,
+    Iterable,
+    Tuple,
+    Any,
+    Union,
+    Literal,
+    Optional,
+)
 
 import plotly
 import plotly.express as px
 import plotly.graph_objs as go
 from numpy.core import linspace
+from plotly.basedatatypes import BaseFigure
 from plotly.subplots import make_subplots
 from scipy.signal import periodogram
 from scipy.stats import pearsonr
@@ -50,12 +60,16 @@ template = dict(
 def _plot_plotly(
     df: pd.DataFrame,
     kind: str,
-    x_title: str = "",
-    y_title: str = "",
-    x_type: str = "-",
-    y_type: str = "-",
-    **kwargs,
-) -> go.Figure:
+    x_title: str = None,
+    y_title: str = None,
+    x_type: Literal[
+        "linear", "log", "date", "category", "multicategory"
+    ] = None,
+    y_type: Literal[
+        "linear", "log", "date", "category", "multicategory"
+    ] = None,
+    **kwargs: Any,
+) -> BaseFigure:
     """
     Wrapper for pandas plot function, with plotly backend and the application of the default styling template.
 
@@ -63,9 +77,9 @@ def _plot_plotly(
     :param kind: The kind of plot to produce.
     :param x_title: x axis title.
     :param y_title: y axis title.
-    :param x_type: If provided, enforces the x axis data type. can be one of 'linear', 'log', 'date', 'category',
+    :param x_type: If provided, enforces the x axis data type. Can be one of 'linear', 'log', 'date', 'category',
         'multicategory'.
-    :param y_type: If provided, enforces the y axis data type. can be one of 'linear', 'log', 'date', 'category',
+    :param y_type: If provided, enforces the y axis data type. Can be one of 'linear', 'log', 'date', 'category',
         'multicategory'.
     :param kwargs: Keyword arguments for pandas.plot.
     :return: Plotly figure.
@@ -86,36 +100,33 @@ def plot_acf(
     y_col: str = None,
     time_col: str = None,
     partial: bool = False,
-    nlags: int = None,
+    n_lags: int = None,
     title: str = None,
     show_threshold: bool = True,
     show: bool = True,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> Optional[BaseFigure]:
     """
-    Interactive barplot of the autocorrelation function of a time series up to a certain lag.
+    Interactive bar plot of the auto-correlation function of a time series up to a certain lag.
 
     :param df: Dataframe to use as the data source for the plot.
     :param y_col: Name of the column from df to be used as time series values in the plot.
     :param time_col: Name of the column from df to be used as time variable in the plot.
-    :param partial: Whether to use the partial autocorrelation function.
-    :param show_threshold: Whether to compute the ACF significance threshold, defined as the 95% confidence upper bound
-        of a time series which has no autocorrelation, and show it as a horizontal line in the plot.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :param nlags: Maximum number of time steps to consider as lag.
-    :type nlags: `int`
+    :param partial: Whether to use the partial auto-correlation function.
+    :param n_lags: Maximum number of time steps to consider as lag.
     :param title: Plot title.
-    :type title: `str`, default *"ACF"*
-    :return: Plotly figure if show is *True*, else nothing.
-    :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
+    :param show_threshold: Whether to compute the ACF significance threshold, defined as the 95% confidence upper bound
+        of a time series which has no auto-correlation, and show it as a horizontal line in the plot.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df = plot_df.filter(items=[y_col])
 
-    if nlags is None:
-        nlags = (
+    if n_lags is None:
+        n_lags = (
             math.floor(len(plot_df) / 4)
             if partial
             else math.floor(len(plot_df) / 2)
@@ -124,7 +135,7 @@ def plot_acf(
     cf = pacf if partial else acf
 
     if kwargs.get("alpha"):
-        acf_values, conf_int = cf(df[y_col], nlags=nlags, **kwargs)
+        acf_values, conf_int = cf(df[y_col], nlags=n_lags, **kwargs)
         acf_values = acf_values[1:]
 
         conf_int = [np.array(value) for value in zip(*conf_int)]
@@ -133,23 +144,23 @@ def plot_acf(
         c_upper = conf_int[1][1:] - acf_values
 
     else:
-        acf_values = cf(plot_df[y_col], nlags=nlags, **kwargs)
+        acf_values = cf(plot_df[y_col], nlags=n_lags, **kwargs)
         acf_values = acf_values[1:]
 
         c_lower = None
         c_upper = None
 
     acf_df = pd.DataFrame(
-        {"lag": linspace(1, nlags, nlags), "acf": acf_values}
+        {"lag": linspace(1, n_lags, n_lags), "acf": acf_values}
     )
 
-    def_title = "PACF" if partial else "ACF"
+    default_title = "PACF" if partial else "ACF"
     fig = _plot_plotly(
         acf_df,
         kind="bar",
         x="lag",
         y="acf",
-        title=title if title else def_title,
+        title=title if title else default_title,
         error_y=c_upper,
         error_y_minus=c_lower,
         x_title="Lag",
@@ -195,29 +206,22 @@ def plot_psd(
     plot_time: bool = False,
     title: str = None,
     show: bool = True,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> Optional[BaseFigure]:
     """
     Interactive histogram of the spectral density of a time series.
 
     :param df: Dataframe to use as the data source for the plot.
     :param y_col: Name of the column from df to be used as time series values in the plot.
     :param time_col: Name of the column from df to be used as time variable in the plot.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
-    :type nfft: `int`, optional, default *None*
-    :param fs: Sampling frequency of `series`.
-    :type fs: `float`, default 1
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :param nfft: Length of the FFT used. If :code:`None` the length of df will be used.
+    :param fs: Sampling frequency of df.
     :param min_period: Minimum period to consider.
-    :type min_period: `float`, default 0
     :param max_period: Maximum period to consider.
-    :type max_period: `float`, default `np.inf`
-    :param plot_time: If *True*, plot time on the *x* axis, else plot sampling frequency.
-    :type plot_time: `bool`, default *True*
+    :param plot_time: If :code:`True`, plot time on the x axis, else plot sampling frequency.
     :param title: Plot title.
-    :type title: `str`, default *"PSD"*.
-    :return: Plotly figure if show is *True*, else nothing.
-    :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -253,37 +257,35 @@ def plot_ts_analysis(
     y_col: str = None,
     time_col: str = None,
     nfft: int = 1024,
-    acf_nlags: int = None,
-    pacf_nlags: int = None,
+    acf_n_lags: int = None,
+    pacf_n_lags: int = None,
     alpha: float = 0.1,
     show: bool = True,
     title: str = None,
-):
+) -> Optional[BaseFigure]:
     """
     Composite plot showing the time series, its spectral density, ACF and PACF.
 
-    :param acf_nlags: Maximum number of time steps to consider as lag for ACF.
-    :param pacf_nlags: Maximum number of time steps to consider as lag for PACF.
     :param df: Dataframe to use as the data source for the plot.
     :param y_col: Name of the column from df to be used as time series values in the plot.
     :param time_col: Name of the column from df to be used as time variable in the plot.
+    :param nfft: Length of the FFT used. If :code:`None` the length of df will be used.
+    :param acf_n_lags: Maximum number of time steps to consider as lag for ACF.
+    :param pacf_n_lags: Maximum number of time steps to consider as lag for PACF.
     :param alpha: If a number is given, the confidence intervals for the given level are displayed in the plot.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
     :param title: Plot title.
-    :param nfft: Length of the FFT used. If *None* the length of `series` will be used.
-    :type nfft: `int`, optional, default *None*
-    :return: Plotly figure if show is *True*, else nothing.
-    :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df = plot_df.filter(items=[y_col])
 
-    if acf_nlags is None:
-        acf_nlags = math.floor(len(plot_df) / 2)
-    if pacf_nlags is None:
-        pacf_nlags = math.floor(len(plot_df) / 4)
+    if acf_n_lags is None:
+        acf_n_lags = math.floor(len(plot_df) / 2)
+    if pacf_n_lags is None:
+        pacf_n_lags = math.floor(len(plot_df) / 4)
 
     fig = make_subplots(
         rows=2,
@@ -319,12 +321,12 @@ def plot_ts_analysis(
 
     # --- ACF ---
     acf_traces = plot_acf(
-        plot_df, nlags=acf_nlags, alpha=alpha, show=False
+        plot_df, n_lags=acf_n_lags, alpha=alpha, show=False
     ).data
 
     # --- PACF ---
     pacf_traces = plot_acf(
-        plot_df, nlags=pacf_nlags, partial=True, alpha=alpha, show=False
+        plot_df, n_lags=pacf_n_lags, partial=True, alpha=alpha, show=False
     ).data
 
     fig.add_trace(periodogram_trace, row=1, col=1)
@@ -345,22 +347,19 @@ def plot_distribution(
     y_col: str = None,
     time_col: str = None,
     bins: int = None,
-    title: str = "",
+    title: str = None,
     show: bool = True,
-):
+) -> Optional[BaseFigure]:
     """
     Interactive histogram of a time series. Useful to assess marginal distribution shape.
 
     :param df: Dataframe to use as the data source for the plot.
     :param y_col: Name of the column from df to be used as time series values in the plot.
     :param time_col: Name of the column from df to be used as time variable in the plot.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
     :param bins: Number of bins in the histogram.
-    :type bins: `int`, default 10
     :param title: Plot title.
-    :type title: `str`, default ""
-    :return: Plotly figure if show is *True*, else nothing.
-    :rtype: :py:class:`plotly.basedatatypes.BaseFigure`
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -388,8 +387,8 @@ def plot_gof(
     y_col: str,
     y_hat_col: str,
     time_col: str = None,
-    acf_nlags: int = None,
-    pacf_nlags: int = None,
+    acf_n_lags: int = None,
+    pacf_n_lags: int = None,
     alpha: float = 0.1,
     title: str = "Goodness of Fit",
     subplot_titles: Tuple[str, str, str, str, str] = (
@@ -400,25 +399,22 @@ def plot_gof(
         "Residuals PACF",
     ),
     show: bool = True,
-):
+) -> Optional[BaseFigure]:
     """
     Interactive plot of goodness of fit visualizations. In order: Actual Series vs Predicted Series,
     Residuals series, and Actual vs Predicted scatter plot.
 
-    :param acf_nlags: Maximum number of time steps to consider as lag for ACF.
-    :param pacf_nlags: Maximum number of time steps to consider as lag for PACF.
+    :param acf_n_lags: Maximum number of time steps to consider as lag for ACF.
+    :param pacf_n_lags: Maximum number of time steps to consider as lag for PACF.
     :param df: Dataframe to use as the data source for the plot.
     :param y_col: Name of the column from df to be used as time series values in the plot.
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param y_hat_col: Name of the column from df to be used as forecast for the time series in the plot.
     :param alpha: If a number is given, the confidence intervals for the given level are displayed in the plot.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
     :param title: Plot title.
-    :type title: `str`, default *"Goodness of Fit"*
     :param subplot_titles: Tuple of titles for each of the 3 subplots.
-    :type subplot_titles: `tuple(str, str, str)`, default (*'Actual vs Predicted Series'*, *'Residuals'*,
-        *Actual vs Predicted Scatter'*)
-    :return: Tuple of plotly figures if show is *True*, else nothing
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Tuple of plotly figures if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -453,15 +449,15 @@ def plot_gof(
             col=2,
         )
 
-    if acf_nlags is None:
-        acf_nlags = math.floor(len(plot_df["Resid"].dropna()) / 2)
-    if pacf_nlags is None:
-        pacf_nlags = math.floor(len(plot_df["Resid"].dropna()) / 4)
+    if acf_n_lags is None:
+        acf_n_lags = math.floor(len(plot_df["Resid"].dropna()) / 2)
+    if pacf_n_lags is None:
+        pacf_n_lags = math.floor(len(plot_df["Resid"].dropna()) / 4)
 
     resid_acf_traces = plot_acf(
         plot_df.dropna(),
         y_col="Resid",
-        nlags=acf_nlags,
+        n_lags=acf_n_lags,
         alpha=alpha,
         show=False,
     ).data
@@ -476,7 +472,7 @@ def plot_gof(
         plot_df.dropna(),
         y_col="Resid",
         partial=True,
-        nlags=pacf_nlags,
+        n_lags=pacf_n_lags,
         alpha=alpha,
         show=False,
     ).data
@@ -509,26 +505,29 @@ def plot_ts(
     y_cols: List[str] = None,
     time_col: str = None,
     title: str = None,
-    tf: Union[str, Callable[[Iterable], Iterable]] = None,
+    tf: Union[
+        Literal["Box-Cox", "Yeo-Johnson", "log", "moving_average"],
+        Callable[[Iterable], Iterable],
+    ] = None,
     tf_args: Tuple = (),
+    tf_kwargs: dict = None,
     keep_original: bool = True,
     show: bool = True,
-    tf_kwargs: dict = None,
-):
+) -> Optional[BaseFigure]:
     """
     Interactive plot of one or mode time series, with possibility of transforming them as well.
 
     :param df: Dataframe to use as the data source for the plot.
-    :param y_cols: Name of the columns from df to be used as time series values in the plot. If *None*, all columns are used.
+    :param y_cols: Name of the columns from df to be used as time series values in the plot. If :code:`None`, all columns are used.
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param title: Plot title.
     :param tf: If provided, a transformation to be applied to the time series. It can be one of "Box-Cox",
         "Yeo-Johnson", "log", "moving_average" or a custom callable one.
     :param tf_args: Positional arguments for the transformation. See tf for details.
     :param tf_kwargs: Keyword arguments for the transformation. See tf for details.
-    :param keep_original: Whether to show the original along with the transformed one. Only active if tf is not *None*.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :return: Plotly figure if show is *True*, else nothing.
+    :param keep_original: Whether to show the original along with the transformed one. Only active if tf is not :code:`None`.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     if tf_kwargs is None:
         tf_kwargs = {}
@@ -569,15 +568,15 @@ def plot_ts(
 def plot_seasonal_ts(
     df: pd.DataFrame,
     period: Union[
-        str,
-        Tuple[Callable[[pd.DatetimeIndex], Any]],
+        Literal["minute", "hour", "day", "week", "month", "quarter", "year"],
+        Tuple[Callable[[Iterable], Iterable]],
     ],
     y_col: str = None,
     time_col: str = None,
     title: str = None,
     subplots: bool = False,
     show: bool = True,
-):
+) -> Optional[BaseFigure]:
     """
     Interactive plot of the seasonal components of a time series.
 
@@ -586,9 +585,9 @@ def plot_seasonal_ts(
     :param y_col: Name of the column from df to be used as time series values in the plot.
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param title: Plot title.
-    :param subplots: Whether to split the seasonal components into subplots. Should be set to *False* if the number of components is too high.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :return: Plotly figure if show is *True*, else nothing.
+    :param subplots: Whether to split the seasonal components into subplots. Should be set to :code:`False` if the number of components is too high.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -649,14 +648,14 @@ def plot_seasonal_ts(
 
 def plot_decomposed_ts(
     df: pd.DataFrame,
-    method: str,
+    method: Literal["STL", "seasonal_additive", "seasonal_multiplicative"],
     y_col: str = None,
     time_col: str = None,
     title: str = None,
     subplots: bool = True,
     show: bool = True,
-    **decomp_kwargs,
-):
+    **decomp_kwargs: Any,
+) -> Optional[BaseFigure]:
     """
     Interactive plot of a decomposition of a time series.
 
@@ -666,9 +665,9 @@ def plot_decomposed_ts(
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param title: Plot title.
     :param subplots: Whether to split the decomposition components into subplots.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
     :param decomp_kwargs: Keyword arguments for the selected decomposition method. See method for details.
-    :return: Plotly figure if show is *True*, else nothing.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -716,7 +715,7 @@ def plot_forecast(
     time_col: str = None,
     title: str = None,
     show: bool = True,
-):
+) -> Optional[BaseFigure]:
     """
     Interactive plot of a time series forecast (or multiple forecasts).
 
@@ -727,8 +726,8 @@ def plot_forecast(
     :param lower_col: If given, name of the column to be used as lower confidence bound for the forecast.
     :param upper_col: If given, name of the column to be used as upper confidence bound for the forecast.
     :param title: Plot title.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :return: Plotly figure if show is *True*, else nothing.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -781,47 +780,48 @@ def plot_forecast(
 
 def plot_scatter_matrix(
     df: pd.DataFrame,
-    var1: str,
-    var2: str = None,
-    lags1: List[int] = None,
-    lags2: List[int] = None,
+    x_col: str,
+    y_col: str = None,
+    lags_x: List[int] = None,
+    lags_y: List[int] = None,
     time_col: str = None,
     title: str = None,
     show: bool = True,
-):
+) -> Optional[BaseFigure]:
     """
     Interactive scatter matrix plot of a set of variables and possibly lagged versions of them.
 
     :param df: Dataframe to use as the data source for the plot.
-    :param var1: Name of the column to be used as first variable in the matrix.
-    :param var2: If given, name of the column to be used as second variable in the matrix.
-    :param lags1: If given, list of lags to be applied to var1 and shown as lagged series in the matrix.
-    :param lags2: If given, list of lags to be applied to var2 and shown as lagged series in the matrix.
+    :param x_col: Name of the column to be used as first variable in the matrix.
+    :param y_col: If given, name of the column to be used as second variable in the matrix.
+    :param lags_x: If given, list of lags to be applied to x_col and shown as lagged series in the matrix.
+    :param lags_y: If given, list of lags to be applied to y_col and shown as lagged series in the matrix.
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param title: Plot title.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :return: Plotly figure if show is *True*, else nothing.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
-    if var2 is None and lags1 is None:
-        print("At least one between var2 and lags1 must be provided")
-        return
+    if y_col is None and lags_x is None:
+        raise ValueError(
+            "At least one between y_col and lags_x must be provided"
+        )
     else:
-        sel_vars = [var1, var2]
+        sel_vars = [x_col, y_col]
         scatter_df = plot_df.filter(items=sel_vars)
-        if lags1:
-            for lag in lags1:
-                scatter_df[f"{var1} lag({lag})"] = plot_df[var1].shift(
+        if lags_x:
+            for lag in lags_x:
+                scatter_df[f"{x_col} lag({lag})"] = plot_df[x_col].shift(
                     periods=lag, axis=0
                 )
-        if lags2:
-            for lag in lags2:
-                scatter_df[f"{var2} lag({lag})"] = plot_df[var2].shift(
+        if lags_y:
+            for lag in lags_y:
+                scatter_df[f"{y_col} lag({lag})"] = plot_df[y_col].shift(
                     periods=lag, axis=0
                 )
 
-        sel_vars_string = ", ".join(sel_vars) if var2 else var1
+        sel_vars_string = ", ".join(sel_vars) if y_col else x_col
 
         feats = list(scatter_df.columns)
         n = len(feats)
@@ -868,7 +868,7 @@ def plot_scatter_fit(
     fit: Union[bool, Literal["summary"]] = False,
     show: bool = True,
     **kwargs,
-):
+) -> Optional[BaseFigure]:
     """
     Interactive scatter plot between two time series with possibility of showing a fit line between them.
 
@@ -878,9 +878,9 @@ def plot_scatter_fit(
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param title: Plot title.
     :param fit: Whether to show the fit line in the plot. If set to "summary", displays fit statistics at the bottom.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :param kwargs: Keyword arguments for fit, if not set to *False*. They are passed to pandas.plot.
-    :return: Plotly figure if show is *True*, else nothing.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :param kwargs: Keyword arguments for fit, if not set to :code:`False`. They are passed to :code:`pandas.plot`.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -915,13 +915,15 @@ def plot_scatter_fit(
             return fig
 
 
-def plot_inverse_arma_roots(process: ArmaProcess, show: bool = True):
+def plot_inverse_arma_roots(
+    process: ArmaProcess, show: bool = True
+) -> Optional[BaseFigure]:
     """
     Plot of the inverse roots of a given ARMA process.
 
     :param process: The ARMA process (statsmodels.tsa.ArmaProcess) for which the roots are computed.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :return: Plotly figure if show is *True*, else nothing.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     copied_process = deepcopy(process)
     roots = copied_process.arroots
@@ -978,16 +980,16 @@ def plot_extended_scatter_matrix(
     y_cols: List[str] = None,
     title: str = None,
     show: bool = True,
-):
+) -> Optional[BaseFigure]:
     """
     Composite plot containing scatter matrix, distributions and couple-correlations of a set of time series.
 
     :param df: Dataframe to use as the data source for the plot.
-    :param y_cols: Name of the columns from df to be used as variables in the plot. If *None*, all columns are used.
+    :param y_cols: Name of the columns from df to be used as variables in the plot. If :code:`None`, all columns are used.
     :param time_col: Name of the column from df to be used as time variable in the plot.
     :param title: Plot title.
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :return: Plotly figure if show is *True*, else nothing.
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     set_time_index(plot_df, time_col)
@@ -1059,34 +1061,28 @@ def plot_extended_scatter_matrix(
 def plot_ts_overview(
     df: pd.DataFrame,
     y_col: str = None,
-    nlags: int = None,
+    n_lags: int = None,
     alpha: float = 0.1,
     show: bool = True,
     title: str = None,
-):
+) -> Optional[BaseFigure]:
     """
-    Composite plot showing a time series, its autocorrelation function and its distribution.
+    Composite plot showing a time series, its auto-correlation function and its distribution.
 
     :param df: Dataframe to use as the data source for the plot.
-    :type df:
     :param y_col: Name of the column from df to be used as time series values in the plot.
-    :type y_col:
-    :param nlags: Maximum number of time steps to consider as lag.
-    :type nlags:
+    :param n_lags: Maximum number of time steps to consider as lag.
     :param alpha: If a number is given, the confidence intervals for the given level are displayed in the plot.
-    :type alpha:
-    :param show: Whether to call Figure.show() at the end of the function. If false, returns the figure.
-    :type show:
+    :param show: Whether to call :code:`Figure.show` at the end of the function. If :code:`False`, returns the figure.
     :param title: Plot title.
-    :type title:
-    :return: Plotly figure if show is *True*, else nothing.
+    :return: Plotly figure if show is :code:`True`, else nothing.
     """
     plot_df = df.copy()
     y_col = y_col if y_col else plot_df.columns[0]
     plot_df = plot_df.filter(items=[y_col])
 
-    if nlags is None:
-        nlags = math.floor(len(plot_df) / 2)
+    if n_lags is None:
+        n_lags = math.floor(len(plot_df) / 2)
 
     fig = make_subplots(
         rows=2,
@@ -1112,7 +1108,7 @@ def plot_ts_overview(
 
     # --- ACF ---
     acf_traces = plot_acf(
-        plot_df, y_col=y_col, nlags=nlags, alpha=alpha, show=False
+        plot_df, y_col=y_col, n_lags=n_lags, alpha=alpha, show=False
     ).data
 
     # --- Distribution ---
