@@ -16,12 +16,8 @@ python = "^3.8"
 numpy = "^1.18.5"
 pandas = "^1.0.4"
 plotly = "^4.8.1"
-bokeh = "^2.0.2"
-chartify = "^3.0.1"
 scipy = "^1.4.1"
 statsmodels = "^0.12.2"
-matplotlib = "^3.2.1"
-sklearn = "^0.0"
 colour = "^0.1.5"
 
 [tool.poetry.dev-dependencies]
