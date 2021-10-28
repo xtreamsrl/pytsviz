@@ -6,6 +6,7 @@ license = "MIT"
 authors = ["xtream <oss@xtreamers.io>", "Emanuele Fabbiani <emanuele.fabbiani@xtreamers.io>", "Gabriele Orlandi <gabriele.orlandi@xtreamers.io>", "Riccardo Maganza <riccardo.maganza@xtreamers.io>"]
 maintainers = ["xtream <oss@xtreamers.io>", "Emanuele Fabbiani <emanuele.fabbiani@xtreamers.io>", "Riccardo Zoncada <riccardo.zoncada@xtreamers.io>"]
 readme = "README.md"
+homepage = "https://github.com/xtreamsrl/pytsviz"
 repository = "https://github.com/xtreamsrl/pytsviz"
 documentation = "https://pytsviz.readthedocs.io/en/latest/"
 keywords = ["python", "data visualization", "time series", "data science"]
@@ -22,10 +23,8 @@ statsmodels = "^0.12.2"
 matplotlib = "^3.2.1"
 sklearn = "^0.0"
 colour = "^0.1.5"
-nbstripout = "^0.3.9"
 
 [tool.poetry.dev-dependencies]
-black = {version = "^20.8b1", allow-prereleases = true}
 commitizen = "^2.14.1"
 pre-commit = "^2.4.0"
 pytest = "^6.2.2"
@@ -38,13 +37,14 @@ jupyterlab = "^3.0.7"
 ipywidgets = ">=7.5"
 notebook = "^6.0.3"
 jupyter_nbextensions_configurator = "^0.4.1"
-cite2c = "^0.2.1"
 sphinx-material = "^0.0.35"
 nbsphinx = "^0.8.7"
 pandoc = "^1.1.0"
 sphinx-rtd-theme = "^1.0.0"
 myst-parser = "^0.15.2"
 sphinx-autodoc-typehints = "^1.12.0"
+nbstripout = "^0.5.0"
+black = "^21.9b0"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/xtreamsrl/pytsviz/issues"
